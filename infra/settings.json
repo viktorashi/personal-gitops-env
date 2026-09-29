@@ -1,0 +1,25 @@
+{
+  "region": "eu-frankfurt-1",
+  "region_key": "FRA",
+  "object_storage_domain": "oci.customer-oci.com",
+  "name": "personal-gitops",
+  "kubernetes_version": "v1.36.1",
+  "node": {
+    "shape": "VM.Standard.A1.Flex",
+    "ocpus": 2,
+    "memory_gbs": 12,
+    "boot_gbs": 50,
+    "image_id": "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaasyhs74xjdopilo7dalg7ktxlcdf6exhvermgvztowvpjgy4bixsq"
+  },
+  "data_gbs": 50,
+  "storage_limit_gbs": 200,
+  "backup_limit": 5,
+  "github": {
+    "repository": "viktorashi/personal-gitops-env",
+    "repository_id": "1394834910",
+    "owner_id": "33178074",
+    "branch": "main",
+    "environment": "oci",
+    "audience": "oci-personal-gitops"
+  }
+}

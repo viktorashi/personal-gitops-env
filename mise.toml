@@ -1,0 +1,46 @@
+min_version = "2026.8.12"
+
+# Shared repository checks: local hooks and CI.
+[tools]
+opentofu = "1.12.6"
+python = "3.12.13"
+prek = "0.4.14"
+taplo = "0.10.0"
+shfmt = "3.13.1"
+shellcheck = "0.11.0"
+rumdl = "0.2.60"
+yamlfmt = "0.21.0"
+"pipx:yamllint" = { version = "1.38.0", depends = ["uv"] }
+actionlint = "1.7.12"
+tflint = "0.64.0"
+"go:github.com/hashicorp/hcl/v2/cmd/hclfmt" = { version = "2.25.0", depends = ["go"] }
+go = "1.27.0"                                                                          # Build-time dependency of hclfmt.
+uv = "0.12.5"                                                                          # Installer for pipx tools; yamllint gets its own Python environment.
+kubectl = "latest"
+
+[settings]
+pipx.uvx = true
+
+[tasks.check]
+description = "Run the same repository checks as CI"
+depends = ["test"]
+run = "prek run --all-files"
+
+[tasks.test]
+description = "Check backup rotation and platform plan boundaries"
+run = [
+  "python -m unittest discover -s functions/backup",
+  "python -m unittest discover -s infra/platform",
+]
+
+[tasks.install-hooks]
+description = "Install local Git hooks"
+run = "prek install --prepare-hooks"
+
+[tasks.bootstrap]
+description = "Set up repository hooks"
+depends = ["install-hooks"]
+
+[tasks.package-backup]
+description = "Build the Functions deployment archive"
+run = "python functions/backup/package.py"

@@ -1,0 +1,55 @@
+name: Platform
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the checked platform plan
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: oci-platform
+  cancel-in-progress: false
+jobs:
+  platform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    environment: oci
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+      - name: Verify authorized branch and environment
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          settings = json.loads(Path('infra/settings.json').read_text())['github']
+          if os.environ['GITHUB_REF'] != 'refs/heads/' + settings['branch'] or settings['environment'] != 'oci':
+              raise SystemExit('Use the configured deployment branch and environment')
+          PY
+      - name: Authenticate the restricted deployer
+        env:
+          OCI_BOOTSTRAP: ${{ vars.OCI_BOOTSTRAP }}
+          OCI_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
+          OCI_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
+        run: python infra/platform/pipeline.py auth
+      - name: Plan, check, and optionally apply
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+          APPLY: ${{ inputs.apply }}
+        run: |
+          tofu -chdir=infra/platform init -input=false -lockfile=readonly -backend-config=backend.local.hcl
+          tofu -chdir=infra/platform plan -input=false -lock-timeout=60s -out=platform.tfplan
+          tofu -chdir=infra/platform show -json platform.tfplan | python infra/platform/pipeline.py check-plan
+          if [ "$APPLY" = true ]; then
+            tofu -chdir=infra/platform apply -input=false platform.tfplan
+          fi
+      - name: Remove ephemeral credentials and plan
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/oci-session" infra/platform/platform.tfplan

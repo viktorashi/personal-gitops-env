@@ -1,0 +1,55 @@
+# OpenTofu/Terraform downloads and local execution data (at any depth).
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.json
+crash.log
+crash.*.log
+.terraform.tfstate.lock.info
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+override.tofu
+*_override.tofu
+.terraformrc
+terraform.rc
+.tofurc
+tofu.rc
+
+# Local inputs and credentials. Commit only deliberately named examples.
+*.tfvars
+*.tfvars.json
+!*.example.tfvars
+!*.example.tfvars.json
+backend.hcl
+*.local.hcl
+.env
+.env.*
+!.env.example
+.local/
+*.pem
+*.key
+
+# Build products and tool caches.
+functions/backup/package/
+functions/backup/function.zip
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.rumdl_cache/
+node_modules/
+.tflint.d/
+.cache/
+
+# Editor/OS scratch files. Shared editor config may be committed.
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Keep mise.lock and .terraform.lock.hcl: they pin tool/provider versions.

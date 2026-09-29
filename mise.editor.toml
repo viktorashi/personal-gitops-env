@@ -1,0 +1,5 @@
+# Editor tools: mise -E editor exec -- <server>
+[tools]
+"aqua:opentofu/tofu-ls" = "0.5.3"
+"npm:yaml-language-server" = { version = "1.24.0", depends = ["node"] }
+node = "26.7.0"                                                         # Runtime dependency of yaml-language-server.

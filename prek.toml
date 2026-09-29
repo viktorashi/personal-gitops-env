@@ -1,0 +1,137 @@
+minimum_prek_version = "0.4.14"
+
+# Go templates are not YAML until Helm renders them.
+exclude = '(^|/)(\.terraform|node_modules|\.venv)/|^functions/backup/package/'
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "trailing-whitespace", args = [
+    "--markdown-linebreak-ext=md",
+  ] },
+  { id = "end-of-file-fixer" },
+  { id = "check-merge-conflict" },
+  { id = "check-added-large-files", args = [
+    "--maxkb=1024",
+  ] },
+  { id = "detect-private-key" },
+  { id = "check-json" },
+  { id = "check-toml" },
+  { id = "check-yaml", args = [
+    "--allow-multiple-documents",
+  ], exclude = '(^|/)templates/' },
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "mise-tasks"
+name = "mise task validation"
+entry = "mise tasks validate"
+language = "system"
+pass_filenames = false
+always_run = true
+
+[[repos.hooks]]
+id = "prek-config"
+name = "prek configuration"
+entry = "mise exec -- prek validate-config prek.toml"
+language = "system"
+files = '^prek\.toml$'
+pass_filenames = false
+
+[[repos.hooks]]
+id = "shell-format"
+name = "shfmt"
+entry = "mise exec -- shfmt --write"
+language = "system"
+files = "\\.sh$"
+
+[[repos.hooks]]
+id = "shell-lint"
+name = "ShellCheck"
+entry = "mise exec -- shellcheck"
+language = "system"
+files = "\\.sh$"
+
+
+[[repos.hooks]]
+id = "toml-format"
+name = "Taplo"
+entry = "mise exec -- taplo format"
+language = "system"
+files = '(\.toml$|(^|/)mise(\.[^/]+)?\.lock$)'
+
+[[repos.hooks]]
+id = "toml-lint"
+name = "Taplo validation"
+entry = "mise exec -- taplo lint --no-schema"
+language = "system"
+files = '(\.toml$|(^|/)mise(\.[^/]+)?\.lock$)'
+
+[[repos.hooks]]
+id = "yaml-format"
+name = "yamlfmt"
+entry = "mise exec -- yamlfmt"
+language = "system"
+types = ["yaml"]
+exclude = '(^|/)templates/'
+
+[[repos.hooks]]
+id = "yaml-lint"
+name = "yamllint"
+entry = "mise exec -- yamllint --strict"
+language = "system"
+types = ["yaml"]
+exclude = '(^|/)templates/'
+
+[[repos.hooks]]
+id = "actions-lint"
+name = "actionlint (includes ShellCheck)"
+entry = "mise exec -- actionlint"
+language = "system"
+files = '^\.github/workflows/.*\.ya?ml$'
+
+[[repos.hooks]]
+id = "markdown-format"
+name = "rumdl format"
+entry = "mise exec -- rumdl fmt"
+language = "system"
+types = ["markdown"]
+
+[[repos.hooks]]
+id = "markdown-lint"
+name = "rumdl lint"
+entry = "mise exec -- rumdl check"
+language = "system"
+types = ["markdown"]
+
+[[repos.hooks]]
+id = "tofu-format"
+name = "OpenTofu format and parse"
+entry = "mise exec -- tofu fmt"
+language = "system"
+files = '\.(tf|tofu|tfvars)$'
+
+[[repos.hooks]]
+id = "hcl-format"
+name = "HCL format and parse"
+entry = "mise exec -- hclfmt -w -check"
+language = "system"
+files = '\.hcl$'
+exclude = '(^|/)\.terraform\.lock\.hcl$'
+
+[[repos]]
+repo = "https://github.com/tofuutils/pre-commit-opentofu"
+rev = "v2.4.2"
+
+[[repos.hooks]]
+id = "tofu_tflint"
+files = '\.(tf|tofu|tfvars)(\.json)?$'
+args = ["--args=--config=__GIT_WORKING_DIR__/.tflint.hcl"]
+
+[[repos.hooks]]
+id = "tofu_validate"
+files = '(\.(tf|tofu|tfvars)(\.json)?$|(^|/)\.terraform\.lock\.hcl$)'
+args = ["--tf-init-args=-input=false", "--tf-init-args=-lockfile=readonly"]

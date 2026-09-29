@@ -1,0 +1,6 @@
+include = ["**/*.toml", "mise*.lock"]
+exclude = ["**/.terraform/**", "**/node_modules/**", "**/.venv/**", "functions/backup/package/**"]
+
+[formatting]
+indent_string = "  "
+column_width = 100
