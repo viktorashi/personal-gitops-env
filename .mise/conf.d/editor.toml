@@ -1,4 +1,4 @@
-# Editor tools: mise -E editor exec -- <server>
+# Editor tools, available whenever mise is active in this repository.
 [tools]
 "aqua:opentofu/tofu-ls" = "0.5.3"
 "npm:yaml-language-server" = { version = "1.24.0", depends = ["node"] }

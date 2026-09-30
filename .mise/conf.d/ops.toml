@@ -1,0 +1,4 @@
+# Operational CLIs, available whenever mise is active in this repository.
+[tools]
+kubectl = "1.37.1"
+oci = "3.94.0"

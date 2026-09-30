@@ -42,6 +42,39 @@ checksum = "sha256:e326da584f855010445c7cc1d190e8ac9918546a6f4317d378bfea1e76f97
 url = "https://github.com/opentofu/tofu-ls/releases/download/v0.5.3/tofu-ls_Windows_x86_64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/tofu-ls/releases/assets/470198137"
 
+[[tools.kubectl]]
+version = "1.37.1"
+backend = "aqua:kubernetes/kubernetes/kubectl"
+specifiers = ["1.37.1"]
+
+[tools.kubectl."platforms.linux-arm64"]
+checksum = "sha256:ff749f4b78d9c4f1ec87307df9b50119ed819e2094aa9810cb9acffc3286c8c7"
+url = "https://dl.k8s.io/v1.37.1/bin/linux/arm64/kubectl"
+
+[tools.kubectl."platforms.linux-arm64-musl"]
+checksum = "sha256:ff749f4b78d9c4f1ec87307df9b50119ed819e2094aa9810cb9acffc3286c8c7"
+url = "https://dl.k8s.io/v1.37.1/bin/linux/arm64/kubectl"
+
+[tools.kubectl."platforms.linux-x64"]
+checksum = "sha256:65691ff77eb6fa44c908b77a1082c9f092c3b9733b5cefabec0d1104890e21a8"
+url = "https://dl.k8s.io/v1.37.1/bin/linux/amd64/kubectl"
+
+[tools.kubectl."platforms.linux-x64-musl"]
+checksum = "sha256:65691ff77eb6fa44c908b77a1082c9f092c3b9733b5cefabec0d1104890e21a8"
+url = "https://dl.k8s.io/v1.37.1/bin/linux/amd64/kubectl"
+
+[tools.kubectl."platforms.macos-arm64"]
+checksum = "sha256:fd65982c97ddad3106754b69ffa196d0e543aa591930ae52aed1adfb92f8c77f"
+url = "https://dl.k8s.io/v1.37.1/bin/darwin/arm64/kubectl"
+
+[tools.kubectl."platforms.macos-x64"]
+checksum = "sha256:6851381c486ff6edd691623e3d65c87cb9a5b02887ff8fbbb38d8a031b748387"
+url = "https://dl.k8s.io/v1.37.1/bin/darwin/amd64/kubectl"
+
+[tools.kubectl."platforms.windows-x64"]
+checksum = "sha256:14b93c4916a6f37a06fbc1f46b0a1d2404c4f9741be09f00d6caf8af3b05f1d3"
+url = "https://dl.k8s.io/v1.37.1/bin/windows/amd64/kubectl.exe"
+
 [[tools.node]]
 version = "26.7.0"
 backend = "core:node"
@@ -79,3 +112,8 @@ url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-win-x64.zip"
 version = "1.24.0"
 backend = "npm:yaml-language-server"
 specifiers = ["1.24.0"]
+
+[[tools.oci]]
+version = "3.94.0"
+backend = "vfox:oci"
+specifiers = ["3.94.0"]

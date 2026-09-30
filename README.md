@@ -6,8 +6,8 @@ mise run check
 ```
 
 - Check tools and tasks: [mise.toml](mise.toml)
-- Operational tools (`mise -E ops`): [mise.ops.toml](mise.ops.toml)
-- Editor tools (`mise -E editor`): [mise.editor.toml](mise.editor.toml)
+- Operational tools: [.mise/conf.d/ops.toml](.mise/conf.d/ops.toml)
+- Editor tools: [.mise/conf.d/editor.toml](.mise/conf.d/editor.toml)
 - Formatters, linters and validation: [prek.toml](prek.toml)
 - CI: [.github/workflows/check.yml](.github/workflows/check.yml)
 - Infrastructure: [infra/README.md](infra/README.md)
