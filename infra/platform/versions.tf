@@ -24,7 +24,12 @@ locals {
 
 # CI uses an ephemeral federated session, not the human administrator's session.
 provider "oci" {
-  region              = local.settings.region
-  auth                = "SecurityToken"
-  config_file_profile = var.profile
+  region                              = local.settings.region
+  auth                                = var.auth
+  config_file_profile                 = var.profile
+  token_exchange_requested_token_type = "urn:oci:token-type:oci-rpst"
+  token_exchange_subject_token_type   = "jwt"
+  token_exchange_resource_type        = "githubactions"
+  token_exchange_rpst_exp             = "60"
+  # Token path, domain URL and client credentials use the provider's OCI_* env vars.
 }

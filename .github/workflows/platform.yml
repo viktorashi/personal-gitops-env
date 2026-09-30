@@ -19,37 +19,52 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      TF_VAR_auth: WorkloadIdentityFederation
+      OCI_TOKEN_EXCHANGE_DOMAIN_URL: ${{ fromJSON(vars.OCI_BOOTSTRAP).domain_url }}
+      OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
+      OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
-      - name: Verify authorized branch and environment
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          settings = json.loads(Path('infra/settings.json').read_text())['github']
-          if os.environ['GITHUB_REF'] != 'refs/heads/' + settings['branch'] or settings['environment'] != 'oci':
-              raise SystemExit('Use the configured deployment branch and environment')
-          PY
-      - name: Authenticate the restricted deployer
+      - name: Prepare inputs and GitHub identity token
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
         env:
           OCI_BOOTSTRAP: ${{ vars.OCI_BOOTSTRAP }}
-          OCI_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
-          OCI_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
-        run: python infra/platform/pipeline.py auth
-      - name: Plan, check, and optionally apply
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
-          AWS_EC2_METADATA_DISABLED: 'true'
-          APPLY: ${{ inputs.apply }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const {github: settings} = JSON.parse(fs.readFileSync('infra/settings.json'));
+            if (context.ref !== `refs/heads/${settings.branch}` || settings.environment !== 'oci') {
+              throw new Error('Use the configured deployment branch and environment');
+            }
+            const bootstrap = JSON.parse(process.env.OCI_BOOTSTRAP);
+            fs.writeFileSync('infra/platform/foundation.auto.tfvars.json', JSON.stringify(bootstrap.platform_inputs));
+            fs.writeFileSync('infra/platform/backend.local.hcl', Object.entries(bootstrap.backend)
+              .map(([key, value]) => `${key} = ${JSON.stringify(value)}`).join('\n') + '\n');
+            core.exportVariable('OCI_OIDC_AUDIENCE', settings.audience);
+            const tokenPath = require('node:path').join(process.env.RUNNER_TEMP, 'github-oidc.jwt');
+            core.exportVariable('OCI_WORKLOAD_IDENTITY_TOKEN_PATH', tokenPath);
+            fs.writeFileSync(tokenPath,
+              await core.getIDToken(settings.audience), {mode: 0o600});
+      - name: Plan and check
         run: |
           tofu -chdir=infra/platform init -input=false -lockfile=readonly -backend-config=backend.local.hcl
           tofu -chdir=infra/platform plan -input=false -lock-timeout=60s -out=platform.tfplan
-          tofu -chdir=infra/platform show -json platform.tfplan | python infra/platform/pipeline.py check-plan
-          if [ "$APPLY" = true ]; then
-            tofu -chdir=infra/platform apply -input=false platform.tfplan
-          fi
+          tofu -chdir=infra/platform show -json platform.tfplan | python infra/platform/pipeline.py
+      - name: Refresh GitHub identity for apply
+        if: inputs.apply
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        with:
+          script: |
+            require('node:fs').writeFileSync(process.env.OCI_WORKLOAD_IDENTITY_TOKEN_PATH,
+              await core.getIDToken(process.env.OCI_OIDC_AUDIENCE), {mode: 0o600});
+      - name: Apply the checked plan
+        if: inputs.apply
+        run: tofu -chdir=infra/platform apply -input=false platform.tfplan
       - name: Remove ephemeral credentials and plan
         if: always()
-        run: rm -rf "$RUNNER_TEMP/oci-session" infra/platform/platform.tfplan
+        run: rm -f "$RUNNER_TEMP/github-oidc.jwt" infra/platform/platform.tfplan

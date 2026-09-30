@@ -1,3 +1,9 @@
+variable "auth" {
+  description = "SecurityToken locally; WorkloadIdentityFederation in GitHub Actions."
+  type        = string
+  default     = "SecurityToken"
+}
+
 variable "profile" {
   description = "OCI CLI session profile."
   type        = string

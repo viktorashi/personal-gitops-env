@@ -1,3 +1,15 @@
+data "oci_functions_functions_runtime_versions" "python" {
+  functions_runtime_name = "python312.ol9"
+  is_current_version     = true
+  state                  = "ACTIVE"
+  lifecycle {
+    postcondition {
+      condition     = length(flatten(self.functions_runtime_version_collection[*].items)) == 1
+      error_message = "Expected one current ACTIVE Python runtime version."
+    }
+  }
+}
+
 resource "oci_functions_application" "this" {
   compartment_id = var.compartment_id
   display_name   = "gitops-recovery"
@@ -32,8 +44,8 @@ resource "oci_functions_function" "this" {
     }
     runtime_config {
       runtime_config_type          = "MANUAL"
-      functions_runtime_name       = "python312.ol9"
-      functions_runtime_version_id = var.runtime_version_id
+      functions_runtime_name       = data.oci_functions_functions_runtime_versions.python.functions_runtime_name
+      functions_runtime_version_id = one(flatten(data.oci_functions_functions_runtime_versions.python.functions_runtime_version_collection[*].items)).id
     }
   }
 }

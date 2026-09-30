@@ -39,11 +39,6 @@ variable "bucket" {
   type        = string
 }
 
-variable "runtime_version_id" {
-  description = "Current ACTIVE python312.ol9 Functions runtime-version OCID."
-  type        = string
-}
-
 variable "enabled" {
   description = "Enable scheduling after a successful invocation and restore drill."
   type        = bool

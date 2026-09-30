@@ -50,7 +50,6 @@ output "backend_config" {
 output "github_configuration" {
   description = "GitHub environment variable OCI_BOOTSTRAP; not secret."
   value = {
-    tenancy_id = var.tenancy_ocid
     domain_url = local.identity_domain.url
     backend = {
       bucket    = oci_objectstorage_bucket.this["state"].name
