@@ -1,4 +1,4 @@
 # Operational CLIs: mise -E ops exec -- <command>
 [tools]
-kubectl = "latest"
-oci = "latest"
+kubectl = "1.37.1"
+oci = "3.94.0"

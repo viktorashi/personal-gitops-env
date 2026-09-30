@@ -21,7 +21,9 @@ jobs:
       id-token: write
     env:
       TF_VAR_auth: WorkloadIdentityFederation
-      OCI_TOKEN_EXCHANGE_DOMAIN_URL: ${{ fromJSON(vars.OCI_BOOTSTRAP).domain_url }}
+      TF_VAR_tenancy_ocid: ${{ vars.OCI_TENANCY_OCID }}
+      TF_VAR_namespace: ${{ vars.OCI_NAMESPACE }}
+      OCI_TOKEN_EXCHANGE_DOMAIN_URL: ${{ vars.OCI_DOMAIN_URL }}
       OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
       OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
@@ -30,10 +32,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
-      - name: Prepare inputs and GitHub identity token
+        with:
+          version: '2026.8.12'
+          install_args: --locked
+      - name: Prepare GitHub identity token
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
-        env:
-          OCI_BOOTSTRAP: ${{ vars.OCI_BOOTSTRAP }}
         with:
           script: |
             const fs = require('node:fs');
@@ -41,10 +44,6 @@ jobs:
             if (context.ref !== `refs/heads/${settings.branch}` || settings.environment !== 'oci') {
               throw new Error('Use the configured deployment branch and environment');
             }
-            const bootstrap = JSON.parse(process.env.OCI_BOOTSTRAP);
-            fs.writeFileSync('infra/platform/foundation.auto.tfvars.json', JSON.stringify(bootstrap.platform_inputs));
-            fs.writeFileSync('infra/platform/backend.local.hcl', Object.entries(bootstrap.backend)
-              .map(([key, value]) => `${key} = ${JSON.stringify(value)}`).join('\n') + '\n');
             core.exportVariable('OCI_OIDC_AUDIENCE', settings.audience);
             const tokenPath = require('node:path').join(process.env.RUNNER_TEMP, 'github-oidc.jwt');
             core.exportVariable('OCI_WORKLOAD_IDENTITY_TOKEN_PATH', tokenPath);
@@ -52,9 +51,10 @@ jobs:
               await core.getIDToken(settings.audience), {mode: 0o600});
       - name: Plan and check
         run: |
-          tofu -chdir=infra/platform init -input=false -lockfile=readonly -backend-config=backend.local.hcl
+          uv sync --locked --all-groups
+          tofu -chdir=infra/platform init -input=false -lockfile=readonly
           tofu -chdir=infra/platform plan -input=false -lock-timeout=60s -out=platform.tfplan
-          tofu -chdir=infra/platform show -json platform.tfplan | python infra/platform/pipeline.py
+          tofu -chdir=infra/platform show -json platform.tfplan | uv run --locked python infra/platform/pipeline.py
       - name: Refresh GitHub identity for apply
         if: inputs.apply
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0

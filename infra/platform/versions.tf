@@ -7,6 +7,9 @@ terraform {
     }
   }
   backend "s3" {
+    bucket                      = "${local.settings.name}-state"
+    region                      = local.settings.region
+    endpoints                   = { s3 = "https://${var.namespace}.compat.objectstorage.${local.settings.region}.${local.settings.object_storage_domain}" }
     key                         = "platform/terraform.tfstate"
     use_lockfile                = true
     use_path_style              = true

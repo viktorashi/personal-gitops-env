@@ -69,7 +69,7 @@ resource "oci_identity_policy" "github" {
     ], [for grant, restrictions in local.github_protected_grants :
     "Allow any-user to ${grant} in compartment id ${oci_identity_compartment.this["platform"].id} where all {${join(", ", concat(local.github_conditions, restrictions))}}"
     ], [for grant in [
-      "read cluster-work-requests", "manage instance-family", "read virtual-network-family",
+      "read cluster-work-requests", "manage instance-family", "read virtual-network-family", "read volumes",
       "use subnets", "use vnics", "use network-security-groups", "use private-ips", "manage public-ips",
     ] : "Allow any-user to ${grant} in compartment id ${oci_identity_compartment.this["platform"].id} where ${local.github_condition}"
   ])

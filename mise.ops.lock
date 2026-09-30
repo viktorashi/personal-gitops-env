@@ -5,7 +5,7 @@ lockfile_version = 1
 [[tools.kubectl]]
 version = "1.37.1"
 backend = "aqua:kubernetes/kubernetes/kubectl"
-specifiers = ["latest"]
+specifiers = ["1.37.1", "latest"]
 
 [tools.kubectl."platforms.linux-arm64"]
 checksum = "sha256:ff749f4b78d9c4f1ec87307df9b50119ed819e2094aa9810cb9acffc3286c8c7"
@@ -38,4 +38,4 @@ url = "https://dl.k8s.io/v1.37.1/bin/windows/amd64/kubectl.exe"
 [[tools.oci]]
 version = "3.94.0"
 backend = "vfox:oci"
-specifiers = ["latest"]
+specifiers = ["3.94.0", "latest"]

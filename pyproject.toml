@@ -1,0 +1,20 @@
+[project]
+name = "personal-gitops-backup"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["oci==2.168.2"]
+
+[build-system]
+requires = ["uv_build==0.12.5"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "backup"
+module-root = "functions/backup/src"
+
+[dependency-groups]
+build = ["uv_build==0.12.5"]
+dev = ["yamllint==1.38.0"]
+
+[tool.uv]
+exclude-newer = "2026-09-24T00:00:00Z"

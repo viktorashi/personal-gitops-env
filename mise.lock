@@ -90,7 +90,7 @@ specifiers = ["2.25.0"]
 [[tools.kubectl]]
 version = "1.37.1"
 backend = "aqua:kubernetes/kubernetes/kubectl"
-specifiers = ["latest"]
+specifiers = ["1.37.1", "latest"]
 
 [tools.kubectl."platforms.linux-arm64"]
 checksum = "sha256:ff749f4b78d9c4f1ec87307df9b50119ed819e2094aa9810cb9acffc3286c8c7"
@@ -159,11 +159,6 @@ url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762
 checksum = "sha256:bcbcd9ca744af6c4053e2d5e75dae79ff33ad7dc38d45e1233e693d096284538"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_windows_amd64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762708"
-
-[[tools."pipx:yamllint"]]
-version = "1.38.0"
-backend = "pipx:yamllint"
-specifiers = ["1.38.0"]
 
 [[tools.prek]]
 version = "0.4.14"

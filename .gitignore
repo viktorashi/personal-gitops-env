@@ -35,6 +35,9 @@ backend.hcl
 # Build products and tool caches.
 functions/backup/package/
 functions/backup/function.zip
+functions/backup/function.manifest.json
+dist/
+*.egg-info/
 .venv/
 __pycache__/
 *.py[cod]

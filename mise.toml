@@ -10,16 +10,25 @@ shfmt = "3.13.1"
 shellcheck = "0.11.0"
 rumdl = "0.2.60"
 yamlfmt = "0.21.0"
-"pipx:yamllint" = { version = "1.38.0", depends = ["uv"] }
 actionlint = "1.7.12"
 tflint = "0.64.0"
 "go:github.com/hashicorp/hcl/v2/cmd/hclfmt" = { version = "2.25.0", depends = ["go"] }
 go = "1.27.0"                                                                          # Build-time dependency of hclfmt.
-uv = "0.12.5"                                                                          # Installer for pipx tools; yamllint gets its own Python environment.
-kubectl = "latest"
+uv = "0.12.5"
+kubectl = "1.37.1"
 
 [settings]
-pipx.uvx = true
+experimental = true
+
+[env]
+UV_LOCKED = "1"
+UV_PYTHON_DOWNLOADS = "never"
+UV_PYTHON_PREFERENCE = "only-system"
+SOURCE_DATE_EPOCH = "1767225600"
+
+[deps.uv]
+auto = true
+run = "uv sync --locked --all-groups"
 
 [tasks.check]
 description = "Run the same repository checks as CI"
@@ -29,8 +38,8 @@ run = "prek run --all-files"
 [tasks.test]
 description = "Check backup rotation and platform plan boundaries"
 run = [
-  "python -m unittest discover -s functions/backup",
-  "python -m unittest discover -s infra/platform",
+  "uv run --locked python -m unittest discover -s functions/backup",
+  "uv run --locked python -m unittest discover -s infra/platform",
 ]
 
 [tasks.install-hooks]
@@ -43,4 +52,4 @@ depends = ["install-hooks"]
 
 [tasks.package-backup]
 description = "Build the Functions deployment archive"
-run = "python functions/backup/package.py"
+run = "uv run --locked --group build python functions/backup/package.py"

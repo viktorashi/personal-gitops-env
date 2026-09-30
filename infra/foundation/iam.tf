@@ -38,7 +38,7 @@ resource "oci_identity_user_group_membership" "state" {
 resource "oci_identity_policy" "state" {
   compartment_id = var.tenancy_ocid
   name           = "gitops-state"
-  description    = "State and lock objects; generate the Customer Secret Key separately"
+  description    = "State and lock objects for the platform backend"
   statements = [
     "Allow group ${oci_identity_group.state.name} to read buckets in compartment id ${oci_identity_compartment.this["state"].id} where target.bucket.name = '${oci_objectstorage_bucket.this["state"].name}'",
     "Allow group ${oci_identity_group.state.name} to manage objects in compartment id ${oci_identity_compartment.this["state"].id} where all {target.bucket.name = '${oci_objectstorage_bucket.this["state"].name}', any {request.permission = 'OBJECT_INSPECT', request.permission = 'OBJECT_READ', request.permission = 'OBJECT_CREATE', request.permission = 'OBJECT_OVERWRITE', request.permission = 'OBJECT_DELETE'}}",

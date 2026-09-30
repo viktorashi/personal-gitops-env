@@ -81,7 +81,7 @@ exclude = '(^|/)templates/'
 [[repos.hooks]]
 id = "yaml-lint"
 name = "yamllint"
-entry = "mise exec -- yamllint --strict"
+entry = "mise exec -- uv run --locked yamllint --strict"
 language = "system"
 types = ["yaml"]
 exclude = '(^|/)templates/'
@@ -124,7 +124,7 @@ exclude = '(^|/)\.terraform\.lock\.hcl$'
 
 [[repos]]
 repo = "https://github.com/tofuutils/pre-commit-opentofu"
-rev = "v2.4.2"
+rev = "c43835bd4b4962a2121e6dcdceaaf1440d68885d"          # v2.4.2
 
 [[repos.hooks]]
 id = "tofu_tflint"

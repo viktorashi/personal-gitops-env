@@ -2,7 +2,7 @@ import datetime as dt
 import unittest
 from types import SimpleNamespace
 
-from func import decide
+from backup.func import decide
 
 
 class RotationTests(unittest.TestCase):

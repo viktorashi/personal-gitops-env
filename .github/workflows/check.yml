@@ -16,5 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+        with:
+          version: '2026.8.12'
+          install_args: --locked
+      - name: Verify locked dependencies and reproducible archive
+        run: |
+          uv sync --locked --all-groups
+          mise run package-backup
+          sha256sum functions/backup/function.zip > "$RUNNER_TEMP/backup.sha256"
+          mise run package-backup
+          sha256sum --check "$RUNNER_TEMP/backup.sha256"
       - name: Run repository hooks
         run: mise run check
