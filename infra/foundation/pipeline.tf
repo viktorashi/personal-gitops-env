@@ -10,7 +10,7 @@ locals {
   }
   github_conditions = [
     "request.principal.type = 'githubactions'",
-    "request.principal.domain.id = '${var.identity_domain.id}'",
+    "request.principal.domain.id = '${local.identity_domain.id}'",
     "request.principal.name = '${local.github_subject}'",
     "request.region = '${lower(local.settings.region_key)}'",
   ]
@@ -26,7 +26,7 @@ locals {
 }
 
 resource "oci_identity_domains_app" "github" {
-  idcs_endpoint   = var.identity_domain.url
+  idcs_endpoint   = local.identity_domain.url
   schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:App"]
   display_name    = "${local.settings.name}-github-exchange"
   active          = true
@@ -34,12 +34,12 @@ resource "oci_identity_domains_app" "github" {
   client_type     = "confidential"
   allowed_grants  = ["client_credentials"]
   based_on_template {
-    value = var.identity_domain.oauth_template_id
+    value = "CustomWebAppTemplateId"
   }
 }
 
 resource "oci_identity_domains_identity_propagation_trust" "github" {
-  idcs_endpoint          = var.identity_domain.url
+  idcs_endpoint          = local.identity_domain.url
   schemas                = ["urn:ietf:params:scim:schemas:oracle:idcs:IdentityPropagationTrust"]
   name                   = "${local.settings.name}-github"
   type                   = "JWT"

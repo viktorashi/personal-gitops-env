@@ -15,6 +15,6 @@ locals {
 # Human-admin stack: neither its state nor its credentials are given to CI.
 provider "oci" {
   region              = local.settings.region
-  auth                = "SecurityToken"
+  auth                = var.auth
   config_file_profile = var.profile
 }

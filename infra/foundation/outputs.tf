@@ -6,7 +6,7 @@ locals {
     endpoint_subnet_id  = oci_core_subnet.this["endpoint"].id
     worker_subnet_id    = oci_core_subnet.this["worker"].id
     edge_subnet_id      = oci_core_subnet.this["edge"].id
-    availability_domain = var.availability_domain
+    availability_domain = local.availability_domain
   }
 }
 
@@ -51,7 +51,7 @@ output "github_configuration" {
   description = "GitHub environment variable OCI_BOOTSTRAP; not secret."
   value = {
     tenancy_id = var.tenancy_ocid
-    domain_url = var.identity_domain.url
+    domain_url = local.identity_domain.url
     backend = {
       bucket    = oci_objectstorage_bucket.this["state"].name
       region    = local.settings.region

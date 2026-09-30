@@ -46,11 +46,11 @@ resource "oci_limits_quota" "free" {
     "zero compute quotas in tenancy",
     "zero compute-core quotas in tenancy",
     "zero compute-memory quotas in tenancy",
-    "set compute-core quota standard-a1-core-count to ${local.settings.node.ocpus} in tenancy where request.ad = '${var.availability_domain}'",
-    "set compute-memory quota standard-a1-memory-count to ${local.settings.node.memory_gbs} in tenancy where request.ad = '${var.availability_domain}'",
+    "set compute-core quota standard-a1-core-count to ${local.settings.node.ocpus} in tenancy where request.ad = '${local.availability_domain}'",
+    "set compute-memory quota standard-a1-memory-count to ${local.settings.node.memory_gbs} in tenancy where request.ad = '${local.availability_domain}'",
     "zero block-storage quotas in tenancy",
-    "set block-storage quota total-storage-gb to ${local.settings.storage_limit_gbs} in tenancy where request.ad = '${var.availability_domain}'",
-    "set block-storage quota volume-count to 4 in tenancy where request.ad = '${var.availability_domain}'",
+    "set block-storage quota total-storage-gb to ${local.settings.storage_limit_gbs} in tenancy where request.ad = '${local.availability_domain}'",
+    "set block-storage quota volume-count to 4 in tenancy where request.ad = '${local.availability_domain}'",
     "set block-storage quota backup-count to ${local.settings.backup_limit} in tenancy where request.region = '${local.settings.region}'",
     "zero container-engine quotas in tenancy",
     "set container-engine quota cluster-count to 1 in tenancy where request.region = '${local.settings.region}'",
@@ -167,7 +167,7 @@ resource "oci_core_subnet" "this" {
 
 resource "oci_core_volume" "fns" {
   compartment_id      = oci_identity_compartment.this["platform"].id
-  availability_domain = var.availability_domain
+  availability_domain = local.availability_domain
   display_name        = "fns-data"
   size_in_gbs         = local.settings.data_gbs
   vpus_per_gb         = 10

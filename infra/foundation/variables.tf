@@ -4,14 +4,29 @@ variable "profile" {
   default     = "DEFAULT"
 }
 
-variable "tenancy_ocid" {
-  description = "Home tenancy OCID."
+variable "auth" {
+  description = "OCI provider authentication method."
   type        = string
+  default     = "SecurityToken"
 }
 
-variable "availability_domain" {
-  description = "Exact Frankfurt availability-domain name for the node and data volume."
+variable "tenancy_ocid" {
+  description = "Target tenancy; supply via TF_VAR_tenancy_ocid from the authenticated OCI profile."
   type        = string
+  validation {
+    condition     = startswith(var.tenancy_ocid, "ocid1.tenancy.")
+    error_message = "Supply a tenancy OCID, not a child compartment."
+  }
+}
+
+variable "availability_domain_number" {
+  description = "Availability domain to select within the configured region."
+  type        = number
+  default     = 1
+  validation {
+    condition     = contains([1, 2, 3], var.availability_domain_number)
+    error_message = "Select AD 1, 2, or 3."
+  }
 }
 
 variable "admin_cidr" {
@@ -29,15 +44,8 @@ variable "unupgraded_account_confirmed" {
   default     = false
 }
 
-variable "identity_domain" {
-  description = "Administrator-managed domain and confidential application template for GitHub federation."
-  type = object({
-    id                = string
-    url               = string
-    oauth_template_id = string
-  })
-  validation {
-    condition     = startswith(var.identity_domain.url, "https://")
-    error_message = "Use the Identity Domain's HTTPS URL."
-  }
+variable "identity_domain_name" {
+  description = "Existing Identity Domain to use for GitHub federation."
+  type        = string
+  default     = "Default"
 }
