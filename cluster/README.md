@@ -93,6 +93,22 @@ The UI Service is internal; it creates no public load balancer.
 
 ## Public address and first user
 
+### Public certificate migration (pending network access)
+
+`publicTls.enabled` in [FNS values](fns/values.yaml) stages the replacement:
+the pinned Traefik Helm dependency obtains and renews a Let's Encrypt certificate
+using TLS-ALPN-01 on port 443. It uses the existing load balancer as a TCP
+forwarder and stores its ACME account/certificates in `tls-acme` on `fns-data`.
+No additional load balancer, disk, DNS account or certificate controller is needed.
+The router has no Kubernetes API permissions. Its public dashboard is disabled.
+
+After Argo's Helm migration, enable that value through a PR. Keep the existing
+`fns` Service (and its IP); verify the OCI listener becomes TCP, issuance succeeds,
+and HTTPS validates without `notes-ca.crt` before removing the old TLS resources.
+The first issuance may briefly serve Traefik's fallback certificate: do not bypass
+verification. Until the public certificate is verified, the private-CA setup below
+remains the deployed configuration.
+
 Endpoint: <https://fns-141-147-0-172.sslip.io>.
 [sslip.io](https://sslip.io/) resolves the embedded load-balancer IP for free;
 it is an external DNS dependency, not a domain we own.

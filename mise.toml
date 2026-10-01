@@ -59,7 +59,9 @@ mise run check
 description = "Lint and validate rendered Kubernetes manifests"
 shell = "bash -e -o pipefail -c"
 run = [
+  "helm dependency build cluster/fns",
   "helm lint cluster/fns",
+  "helm template fns cluster/fns --namespace fns --set publicTls.enabled=true | kubeconform -strict -summary",
   "helm template fns cluster/fns | kubeconform -strict -summary",
   "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com | kubeconform -strict -summary",
   "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com,publicAccess=true,registrationEnabled=false,adminUid=1 | kubeconform -strict -summary",

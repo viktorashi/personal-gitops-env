@@ -4,3 +4,8 @@ description: Fast Note Sync with SQLite and a DNS hostname
 type: application
 version: 0.1.0
 appVersion: 3.6.1
+dependencies:
+  - name: traefik
+    version: 41.6.1
+    repository: oci://ghcr.io/traefik/helm
+    condition: publicTls.enabled

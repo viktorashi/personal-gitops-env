@@ -30,6 +30,10 @@ spec:
   namespaceResourceWhitelist:
     - group: ''
       kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: ServiceAccount
     - group: apps
       kind: Deployment
 ---
