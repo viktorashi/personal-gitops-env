@@ -25,10 +25,6 @@ jobs:
       TF_VAR_tenancy_ocid: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_namespace: ${{ vars.OCI_NAMESPACE }}
       OCI_TOKEN_EXCHANGE_DOMAIN_URL: ${{ vars.OCI_DOMAIN_URL }}
-      OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
-      OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
       AWS_EC2_METADATA_DISABLED: 'true'
       MISE_DISABLE_TOOLS: oci
     steps:
@@ -39,8 +35,18 @@ jobs:
           install_args: --locked
       - name: Prepare GitHub identity token
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        env:
+          OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
+          OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
         with:
           script: |
+            for (const name of ['OCI_TOKEN_EXCHANGE_CLIENT_ID', 'OCI_TOKEN_EXCHANGE_CLIENT_SECRET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']) {
+              if (!process.env[name]) throw new Error(`Environment credential ${name} is empty; reconcile foundation secrets`);
+              core.setSecret(process.env[name]);
+              core.exportVariable(name, process.env[name]);
+            }
             const fs = require('node:fs');
             const {github: settings} = JSON.parse(fs.readFileSync('infra/settings.json'));
             const applying = ${{ inputs.apply }};
@@ -60,11 +66,11 @@ jobs:
         run: |
           set -o pipefail
           uv sync --locked --all-groups
-          tofu -chdir=infra/platform init -input=false -lockfile=readonly
+          tofu -chdir=infra/platform init -no-color -input=false -lockfile=readonly 2>&1 | tee "$RUNNER_TEMP/plan.txt"
           # Preview has read-only backend credentials: no lock writes or state writes.
           lock=true
           if [ "$APPLY" = false ]; then lock=false; fi
-          tofu -chdir=infra/platform plan -no-color -input=false -lock="$lock" -lock-timeout=60s -out=platform.tfplan > "$RUNNER_TEMP/plan.txt" 2>&1
+          tofu -chdir=infra/platform plan -no-color -input=false -lock="$lock" -lock-timeout=60s -out=platform.tfplan 2>&1 | tee -a "$RUNNER_TEMP/plan.txt"
           tofu -chdir=infra/platform show -json platform.tfplan | uv run --locked python infra/platform/pipeline.py
       - name: Update PR plan comment
         if: always() && !inputs.apply

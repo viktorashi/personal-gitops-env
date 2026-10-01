@@ -22,15 +22,8 @@ jobs:
         with:
           version: '2026.8.12'
           install_args: --locked
-      - name: Verify locked dependencies and reproducible archive
-        run: |
-          uv sync --locked --all-groups
-          mise run package-backup
-          sha256sum functions/backup/function.zip > "$RUNNER_TEMP/backup.sha256"
-          mise run package-backup
-          sha256sum --check "$RUNNER_TEMP/backup.sha256"
-      - name: Run repository hooks
-        run: mise run check
+      - name: Run full repository validation
+        run: mise run check-ci
   preview:
     needs: validate
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
