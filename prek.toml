@@ -34,6 +34,14 @@ pass_filenames = false
 always_run = true
 
 [[repos.hooks]]
+id = "cluster"
+name = "Render and validate GitOps manifests"
+entry = "mise exec -- bash scripts/check-cluster.sh"
+language = "system"
+files = '^(cluster/|scripts/check-cluster\.sh$)'
+pass_filenames = false
+
+[[repos.hooks]]
 id = "prek-config"
 name = "prek configuration"
 entry = "mise exec -- prek validate-config prek.toml"

@@ -1,23 +1,7 @@
 locals {
   subnets = {
-    endpoint = "10.42.0.0/24"
-    worker   = "10.42.1.0/24"
-    edge     = "10.42.2.0/24"
-  }
-  ingress = {
-    endpoint = [
-      { source = var.admin_cidr, min = 6443, max = 6443 },
-      { source = local.subnets.worker, min = 6443, max = 6443 },
-      { source = local.subnets.worker, min = 12250, max = 12250 },
-    ]
-    worker = [
-      { source = local.subnets.endpoint, min = 10250, max = 10250 },
-      { source = local.subnets.edge, min = 30000, max = 32767 },
-    ]
-    edge = [
-      { source = "0.0.0.0/0", min = 80, max = 80 },
-      { source = "0.0.0.0/0", min = 443, max = 443 },
-    ]
+    oke      = { cidr = cidrsubnet("10.0.0.0/16", 8, 0), public = true }
+    recovery = { cidr = cidrsubnet("10.0.0.0/16", 8, 1), public = false }
   }
 }
 
@@ -76,7 +60,7 @@ resource "oci_objectstorage_bucket" "this" {
 
 resource "oci_core_vcn" "this" {
   compartment_id = oci_identity_compartment.this["platform"].id
-  cidr_blocks    = ["10.42.0.0/16"]
+  cidr_blocks    = ["10.0.0.0/16"]
   display_name   = "gitops"
   dns_label      = "gitops"
 }
@@ -103,16 +87,14 @@ resource "oci_core_service_gateway" "this" {
 }
 
 resource "oci_core_route_table" "this" {
+  for_each       = local.subnets
   compartment_id = oci_identity_compartment.this["platform"].id
   vcn_id         = oci_core_vcn.this.id
+  display_name   = each.key
   route_rules {
-    destination       = "0.0.0.0/0"
-    network_entity_id = oci_core_internet_gateway.this.id
-  }
-  route_rules {
-    destination_type  = "SERVICE_CIDR_BLOCK"
-    destination       = one(data.oci_core_services.this.services).cidr_block
-    network_entity_id = oci_core_service_gateway.this.id
+    destination_type  = each.value.public ? "CIDR_BLOCK" : "SERVICE_CIDR_BLOCK"
+    destination       = each.value.public ? "0.0.0.0/0" : one(data.oci_core_services.this.services).cidr_block
+    network_entity_id = each.value.public ? oci_core_internet_gateway.this.id : oci_core_service_gateway.this.id
   }
 }
 
@@ -126,26 +108,30 @@ resource "oci_core_security_list" "this" {
     destination = "0.0.0.0/0"
   }
   dynamic "ingress_security_rules" {
-    for_each = local.ingress[each.key]
+    for_each = each.value.public ? [
+      { source = var.admin_cidr, port = 6443 },
+      { source = "0.0.0.0/0", port = 80 },
+      { source = "0.0.0.0/0", port = 443 },
+    ] : []
     content {
       protocol = "6"
       source   = ingress_security_rules.value.source
       tcp_options {
-        min = ingress_security_rules.value.min
-        max = ingress_security_rules.value.max
+        min = ingress_security_rules.value.port
+        max = ingress_security_rules.value.port
       }
     }
   }
   dynamic "ingress_security_rules" {
-    for_each = each.key == "worker" ? [1] : []
+    for_each = each.value.public ? [1] : []
     content {
       protocol = "all"
-      source   = local.subnets.worker
+      source   = each.value.cidr
     }
   }
   ingress_security_rules {
     protocol = "1"
-    source   = "10.42.0.0/16"
+    source   = "0.0.0.0/0"
     icmp_options {
       type = 3
       code = 4
@@ -157,12 +143,12 @@ resource "oci_core_subnet" "this" {
   for_each                   = local.subnets
   compartment_id             = oci_identity_compartment.this["platform"].id
   vcn_id                     = oci_core_vcn.this.id
-  cidr_block                 = each.value
+  cidr_block                 = each.value.cidr
   display_name               = each.key
   dns_label                  = each.key
-  route_table_id             = oci_core_route_table.this.id
+  route_table_id             = oci_core_route_table.this[each.key].id
   security_list_ids          = [oci_core_security_list.this[each.key].id]
-  prohibit_public_ip_on_vnic = false
+  prohibit_public_ip_on_vnic = !each.value.public
 }
 
 resource "oci_core_volume" "fns" {

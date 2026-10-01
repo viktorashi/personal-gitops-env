@@ -1,0 +1,123 @@
+{{- if .Values.enabled }}
+{{- $ip := required "Set publicIp to the Service's IP" .Values.publicIp }}
+{{- if and .Values.publicAccess (or .Values.registrationEnabled (not .Values.adminUid)) }}
+{{- fail "Disable registration and set adminUid before enabling publicAccess" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fns-caddy
+data:
+  Caddyfile: |
+    {
+      email {{ required "Set acmeEmail" .Values.acmeEmail }}
+      auto_https disable_redirects
+    }
+    https://{{ $ip }} {
+      tls {
+        issuer acme {
+          dir https://acme-v02.api.letsencrypt.org/directory
+          profile shortlived
+          disable_tlsalpn_challenge
+        }
+      }
+      {{- if .Values.publicAccess }}
+      reverse_proxy 127.0.0.1:9000
+      {{- else }}
+      respond "Initial setup in progress" 503
+      {{- end }}
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: fns
+  template:
+    metadata:
+      labels:
+        app: fns
+      annotations:
+        configuration: {{ .Values | toJson | sha256sum | quote }}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      terminationGracePeriodSeconds: 60
+      initContainers:
+        - name: configure
+          image: {{ .Values.image }}
+          command: [sh, -ec]
+          args:
+            - |
+              umask 077
+              mkdir -p /data/config /data/storage /data/caddy
+              if [ ! -f /data/config/auth-key ]; then
+                head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/config/auth-key
+              fi
+              if [ ! -f /data/config/share-key ]; then
+                head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/config/share-key
+              fi
+              cat > /data/config/config.yaml.new <<EOF
+              server:
+                http-port: ":9000"
+                ext-api-url: "https://{{ $ip }}"
+              security:
+                auth-token-key: "$(cat /data/config/auth-key)"
+                share-token-key: "$(cat /data/config/share-key)"
+              database:
+                type: sqlite
+                path: storage/database/db.sqlite3
+              user:
+                register-is-enable: {{ .Values.registrationEnabled }}
+                admin-uid: {{ .Values.adminUid }}
+              attachment-static:
+                is-enable: false
+              EOF
+              mv /data/config/config.yaml.new /data/config/config.yaml
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: fns
+          image: {{ .Values.image }}
+          workingDir: /fast-note-sync
+          command: [/fast-note-sync/fast-note-sync-service, run]
+          ports:
+            - name: app
+              containerPort: 9000
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 2Gi}
+          startupProbe:
+            tcpSocket: {port: app}
+            failureThreshold: 60
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket: {port: app}
+          volumeMounts:
+            - {name: data, mountPath: /fast-note-sync/storage, subPath: storage}
+            - {name: data, mountPath: /fast-note-sync/config, subPath: config}
+        - name: caddy
+          image: {{ .Values.caddyImage }}
+          ports:
+            - {name: http, containerPort: 80}
+            - {name: https, containerPort: 443}
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          volumeMounts:
+            - {name: caddy-config, mountPath: /etc/caddy, readOnly: true}
+            - {name: data, mountPath: /data, subPath: caddy}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: fns-data}
+        - name: caddy-config
+          configMap: {name: fns-caddy}
+{{- end }}

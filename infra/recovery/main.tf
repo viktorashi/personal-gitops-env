@@ -13,7 +13,7 @@ data "oci_functions_functions_runtime_versions" "python" {
 resource "oci_functions_application" "this" {
   compartment_id = local.compartment_id
   display_name   = "gitops-recovery"
-  subnet_ids     = [module.foundation.subnet_ids.edge]
+  subnet_ids     = [module.foundation.subnet_ids.recovery]
   shape          = "GENERIC_X86"
 }
 

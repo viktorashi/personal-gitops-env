@@ -16,6 +16,9 @@ tflint = "0.64.0"
 go = "1.27.0"                                                                          # Build-time dependency of hclfmt.
 uv = "0.12.5"
 kubectl = "1.37.1"
+helm = "3.19.0"
+kubeconform = "0.7.0"
+crane = "0.20.6"
 
 [settings]
 experimental = true

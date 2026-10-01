@@ -11,5 +11,6 @@ mise run check
 - Formatters, linters and validation: [prek.toml](prek.toml)
 - CI: [.github/workflows/check.yml](.github/workflows/check.yml)
 - Infrastructure: [infra/README.md](infra/README.md)
+- Argo CD and notes: [cluster/README.md](cluster/README.md)
 
 Foundation is basically bootstrapping

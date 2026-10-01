@@ -38,7 +38,7 @@ data "oci_core_vcns" "this" {
 }
 
 data "oci_core_subnets" "this" {
-  for_each       = toset(["endpoint", "worker", "edge"])
+  for_each       = toset(["oke", "recovery"])
   compartment_id = one(data.oci_identity_compartments.platform.compartments).id
   vcn_id         = one(data.oci_core_vcns.this.virtual_networks).id
   display_name   = each.key

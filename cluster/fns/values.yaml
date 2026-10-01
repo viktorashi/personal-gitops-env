@@ -1,0 +1,10 @@
+# Enable after binding the existing volume and obtaining the Service's public IP.
+enabled: false
+publicIp: ''
+acmeEmail: ''
+# Keep false while registering your user through kubectl port-forward.
+publicAccess: false
+registrationEnabled: true
+adminUid: 0
+image: haierkeys/fast-note-sync-service:3.6.1@sha256:15833f15e83cee05794c3fe6028c7e41fd36c787f0d651415cad556579fc379f
+caddyImage: caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b

@@ -6,13 +6,13 @@ resource "oci_containerengine_cluster" "this" {
   type               = "BASIC_CLUSTER"
   endpoint_config {
     is_public_ip_enabled = true
-    subnet_id            = module.foundation.subnet_ids.endpoint
+    subnet_id            = module.foundation.subnet_ids.oke
   }
   cluster_pod_network_options {
     cni_type = "FLANNEL_OVERLAY"
   }
   options {
-    service_lb_subnet_ids = [module.foundation.subnet_ids.edge]
+    service_lb_subnet_ids = [module.foundation.subnet_ids.oke]
     kubernetes_network_config {
       pods_cidr     = "10.244.0.0/16"
       services_cidr = "10.96.0.0/16"
@@ -43,7 +43,7 @@ resource "oci_containerengine_node_pool" "this" {
     is_pv_encryption_in_transit_enabled = true
     placement_configs {
       availability_domain = module.foundation.volume.availability_domain
-      subnet_id           = module.foundation.subnet_ids.worker
+      subnet_id           = module.foundation.subnet_ids.oke
     }
   }
   lifecycle {
