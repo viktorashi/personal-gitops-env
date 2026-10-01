@@ -31,6 +31,19 @@ resource "oci_identity_group" "state" {
   description    = "State bucket access"
 }
 
+resource "oci_identity_user_capabilities_management" "state" {
+  for_each = {
+    deploy = oci_identity_user.state.id
+    plan   = oci_identity_user.preview.id
+  }
+  user_id                      = each.value
+  can_use_customer_secret_keys = true
+  can_use_console_password     = false
+  can_use_api_keys             = false
+  can_use_auth_tokens          = false
+  can_use_smtp_credentials     = false
+}
+
 resource "oci_identity_user_group_membership" "state" {
   user_id  = oci_identity_user.state.id
   group_id = oci_identity_group.state.id

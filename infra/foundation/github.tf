@@ -28,6 +28,10 @@ resource "github_repository_ruleset" "main" {
         context        = "validate"
         integration_id = 15368 # GitHub Actions
       }
+      required_check {
+        context        = "plan"
+        integration_id = 15368
+      }
     }
   }
 }

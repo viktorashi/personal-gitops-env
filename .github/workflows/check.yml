@@ -6,9 +6,12 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  # The interactive OCI CLI's installer does not support locked downloads.
+  MISE_DISABLE_TOOLS: oci
 concurrency:
   group: validate-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   validate:
     runs-on: ubuntu-24.04
@@ -28,3 +31,33 @@ jobs:
           sha256sum --check "$RUNNER_TEMP/backup.sha256"
       - name: Run repository hooks
         run: mise run check
+  preview:
+    needs: validate
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    uses: ./.github/workflows/platform.yml
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      apply: false
+  plan:
+    needs: [validate, preview]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require successful validation and cloud preview
+        env:
+          VALIDATION: ${{ needs.validate.result }}
+          PREVIEW: ${{ needs.preview.result }}
+        run: test "$VALIDATION" = success && test "$PREVIEW" = success
+  deploy:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/platform.yml
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      apply: true
