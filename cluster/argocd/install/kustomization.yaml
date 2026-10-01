@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: argocd
 resources:
   - https://raw.githubusercontent.com/argoproj/argo-cd/c9c369efcc5b2a0bd720803f8d14a1c3eaddf579/manifests/core-install.yaml
+  - https://github.com/argoproj/argo-cd//manifests/base/server?ref=c9c369efcc5b2a0bd720803f8d14a1c3eaddf579
+  - https://github.com/argoproj/argo-cd//manifests/cluster-rbac/server?ref=c9c369efcc5b2a0bd720803f8d14a1c3eaddf579
 images:
   - name: quay.io/argoproj/argocd
     digest: sha256:dd3f47d5a5e4da563a7a398506e892481b358a7cec50abdf320c71aa55904bfa

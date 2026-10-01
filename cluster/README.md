@@ -2,8 +2,9 @@
 
 This is the environment repo from the [book's quickstart](https://github.com/gitops-tech/book):
 Upstream builds FNS; Argo reconciles this repo's images/configuration inside OKE.
-[Argo CD Core](https://argo-cd.readthedocs.io/en/stable/operator-manual/core/) omits the
-public UI, SSO and notifications; the unused ApplicationSet controller is removed.
+[Argo CD Core](https://argo-cd.readthedocs.io/en/stable/operator-manual/core/) plus the
+upstream API/UI server are pinned together. SSO and notifications are omitted;
+the unused ApplicationSet controller is removed.
 CI only validates manifests.
 
 ## Bootstrap once
@@ -42,6 +43,26 @@ The public repo needs no Git credential. Namespaces and retained volume bindings
 belong to [the human bootstrap stack](../infra/cluster/main.tf).
 Argo owns application resources.
 Keep that local state with your other encrypted bootstrap-state backups.
+
+## Argo CD web UI
+
+With the OKE kubeconfig and `OCI_CLI_AUTH=security_token` set:
+
+```sh
+kubectl -n argocd port-forward svc/argocd-server 8080:443
+```
+
+Open <https://localhost:8080>. The server uses its own self-signed certificate;
+the port-forward is localhost-only over the authenticated Kubernetes connection.
+Sign in as `admin`, retrieving the generated initial password locally:
+
+```sh
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 --decode
+```
+
+Change the password in User Info, then delete `argocd-initial-admin-secret`.
+The UI Service is internal; it creates no public load balancer.
 
 ## Public address and first user
 
