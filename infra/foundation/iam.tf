@@ -22,12 +22,26 @@ resource "oci_identity_user" "state" {
   compartment_id = var.tenancy_ocid
   name           = "gitops-state"
   description    = "S3-compatible state backend only"
+  email          = var.state_user_email
 }
 
 resource "oci_identity_group" "state" {
   compartment_id = var.tenancy_ocid
   name           = "gitops-state"
   description    = "State bucket access"
+}
+
+resource "oci_identity_user_capabilities_management" "state" {
+  for_each = {
+    deploy = oci_identity_user.state.id
+    plan   = oci_identity_user.preview.id
+  }
+  user_id                      = each.value
+  can_use_customer_secret_keys = true
+  can_use_console_password     = false
+  can_use_api_keys             = false
+  can_use_auth_tokens          = false
+  can_use_smtp_credentials     = false
 }
 
 resource "oci_identity_user_group_membership" "state" {

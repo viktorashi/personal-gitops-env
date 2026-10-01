@@ -43,6 +43,18 @@ run = "prek run --all-files"
 description = "Check backup rotation"
 run = "uv run --locked python -m unittest discover -s functions/backup"
 
+[tasks.check-ci]
+description = "Run full CI validation locally, including reproducible packaging"
+shell = "bash -e -o pipefail -c"
+run = '''
+uv sync --locked --all-groups
+mise run package-backup
+expected=$(sha256sum functions/backup/function.zip)
+mise run package-backup
+test "$expected" = "$(sha256sum functions/backup/function.zip)"
+mise run check
+'''
+
 [tasks.check-cluster]
 description = "Lint and validate rendered Kubernetes manifests"
 shell = "bash -e -o pipefail -c"

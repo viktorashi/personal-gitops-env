@@ -8,8 +8,10 @@ mise exec -- tofu -chdir=infra/foundation init -lockfile=readonly
 ```
 
 Copy [example inputs](foundation/inputs.example.tfvars) to `inputs.auto.tfvars`
-in that directory. Set your allowed public IPv4 `/32` and confirm no paid upgrade.
-Existing files should contain only those inputs; old placeholders override `TF_VAR_*`.
+in that directory. Set your allowed public IPv4 `/32`, confirm no paid upgrade,
+and set `state_user_email` to a reachable address unique among tenancy users
+(a plus-address alias works if your email provider supports it).
+Remove obsolete placeholders from existing files; they override `TF_VAR_*`.
 
 ```sh
 mise exec -- tofu -chdir=infra/foundation plan -out=bootstrap.tfplan

@@ -1,34 +1,32 @@
 name: Platform
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       apply:
-        description: Apply the checked platform plan
+        description: Deploy the validated main commit
         type: boolean
         default: false
 permissions:
   contents: read
 concurrency:
-  group: oci-platform
+  group: oci-platform-${{ inputs.apply && 'deploy' || github.event.pull_request.number }}
   cancel-in-progress: false
 jobs:
   platform:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
-    environment: oci
+    environment: ${{ inputs.apply && 'oci' || 'oci-plan' }}
     permissions:
       contents: read
       id-token: write
+      pull-requests: write
     env:
       TF_VAR_auth: WorkloadIdentityFederation
       TF_VAR_tenancy_ocid: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_namespace: ${{ vars.OCI_NAMESPACE }}
       OCI_TOKEN_EXCHANGE_DOMAIN_URL: ${{ vars.OCI_DOMAIN_URL }}
-      OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
-      OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
       AWS_EC2_METADATA_DISABLED: 'true'
+      MISE_DISABLE_TOOLS: oci
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
@@ -37,12 +35,24 @@ jobs:
           install_args: --locked
       - name: Prepare GitHub identity token
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        env:
+          OCI_TOKEN_EXCHANGE_CLIENT_ID: ${{ secrets.OCI_CLIENT_ID }}
+          OCI_TOKEN_EXCHANGE_CLIENT_SECRET: ${{ secrets.OCI_CLIENT_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.OCI_STATE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_STATE_SECRET_KEY }}
         with:
           script: |
+            for (const name of ['OCI_TOKEN_EXCHANGE_CLIENT_ID', 'OCI_TOKEN_EXCHANGE_CLIENT_SECRET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']) {
+              if (!process.env[name]) throw new Error(`Environment credential ${name} is empty; reconcile foundation secrets`);
+              core.setSecret(process.env[name]);
+              core.exportVariable(name, process.env[name]);
+            }
             const fs = require('node:fs');
             const {github: settings} = JSON.parse(fs.readFileSync('infra/settings.json'));
-            if (context.ref !== `refs/heads/${settings.branch}` || settings.environment !== 'oci') {
-              throw new Error('Use the configured deployment branch and environment');
+            const applying = ${{ inputs.apply }};
+            if (applying ? (context.eventName !== 'push' || context.ref !== `refs/heads/${settings.branch}`)
+                         : (context.eventName !== 'pull_request' || context.payload.pull_request.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`)) {
+              throw new Error('Deployment requires main push; preview requires a same-repository PR');
             }
             core.exportVariable('OCI_OIDC_AUDIENCE', settings.audience);
             const tokenPath = require('node:path').join(process.env.RUNNER_TEMP, 'github-oidc.jwt');
@@ -50,11 +60,35 @@ jobs:
             fs.writeFileSync(tokenPath,
               await core.getIDToken(settings.audience), {mode: 0o600});
       - name: Plan and check
+        id: plan
+        env:
+          APPLY: ${{ inputs.apply }}
         run: |
+          set -o pipefail
           uv sync --locked --all-groups
-          tofu -chdir=infra/platform init -input=false -lockfile=readonly
-          tofu -chdir=infra/platform plan -input=false -lock-timeout=60s -out=platform.tfplan
+          tofu -chdir=infra/platform init -no-color -input=false -lockfile=readonly 2>&1 | tee "$RUNNER_TEMP/plan.txt"
+          # Preview has read-only backend credentials: no lock writes or state writes.
+          lock=true
+          if [ "$APPLY" = false ]; then lock=false; fi
+          tofu -chdir=infra/platform plan -no-color -input=false -lock="$lock" -lock-timeout=60s -out=platform.tfplan 2>&1 | tee -a "$RUNNER_TEMP/plan.txt"
           tofu -chdir=infra/platform show -json platform.tfplan | uv run --locked python infra/platform/pipeline.py
+      - name: Update PR plan comment
+        if: always() && !inputs.apply
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const marker = '<!-- opentofu-platform-plan -->';
+            const file = `${process.env.RUNNER_TEMP}/plan.txt`;
+            const output = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : 'Plan did not run; inspect the workflow logs.';
+            const diff = output.replace(/^([ \t]+)([+\-~])/gm, '$2$1').replace(/```/g, "'''");
+            const body = `${marker}\n### OpenTofu platform: ${process.env.PLAN_OUTCOME}\nCommit: ${context.payload.pull_request.head.sha}\n\n\`\`\`diff\n${diff.slice(0, 55000)}\n\`\`\`\n[Full run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\nDeployment replans the merged commit against current state.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {...context.repo, issue_number: context.issue.number});
+            const previous = comments.find(c => c.user.type === 'Bot' && c.body.includes(marker));
+            if (previous) await github.rest.issues.updateComment({...context.repo, comment_id: previous.id, body});
+            else await github.rest.issues.createComment({...context.repo, issue_number: context.issue.number, body});
       - name: Refresh GitHub identity for apply
         if: inputs.apply
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0

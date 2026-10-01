@@ -1,15 +1,15 @@
 # Only the human foundation identity owns this trust and its grants.
 locals {
-  github_subject = "repo:${local.settings.github.repository}:environment:${local.settings.github.environment}"
+  # Explicit GitHub subject template avoids name-based versus immutable-default drift.
+  github_subject_prefix = "repository_owner_id:${local.settings.github.owner_id}:repository_id:${local.settings.github.repository_id}:environment"
+  github_subject        = "${local.github_subject_prefix}:${local.settings.github.environment}"
   github_claims = {
     repository_id       = local.settings.github.repository_id
     repository_owner_id = local.settings.github.owner_id
-    sub                 = local.github_subject
-    ref                 = "refs/heads/${local.settings.github.branch}"
     aud                 = local.settings.github.audience
   }
   github_conditions = [
-    "request.principal.type = 'githubactions'",
+    "request.principal.type = 'identityfederateddomainapp'",
     "request.principal.domain.id = '${local.identity_domain.id}'",
     "request.principal.name = '${local.github_subject}'",
     "request.region = '${lower(local.settings.region_key)}'",
@@ -26,8 +26,11 @@ locals {
 }
 
 resource "oci_identity_domains_app" "github" {
-  idcs_endpoint   = local.identity_domain.url
-  schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:App"]
+  idcs_endpoint = local.identity_domain.url
+  schemas = [
+    "urn:ietf:params:scim:schemas:oracle:idcs:App",
+    "urn:ietf:params:scim:schemas:oracle:idcs:extension:OCITags",
+  ]
   display_name    = "${local.settings.name}-github-exchange"
   active          = true
   is_oauth_client = true
@@ -50,7 +53,9 @@ resource "oci_identity_domains_identity_propagation_trust" "github" {
   subject_claim_name     = "sub"
   allow_impersonation    = true
   impersonating_resource = "githubactions"
-  oauth_clients          = [oci_identity_domains_app.github.name]
+  # OCI permits one trust per issuer. Signed environment subjects select IAM grants;
+  # GitHub deployment policies restrict which refs may use those environments.
+  oauth_clients = [oci_identity_domains_app.github.name, oci_identity_domains_app.preview.name]
   dynamic "claim_validations" {
     for_each = local.github_claims
     content {

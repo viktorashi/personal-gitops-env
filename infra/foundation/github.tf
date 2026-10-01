@@ -2,6 +2,46 @@ provider "github" {
   owner = split("/", local.settings.github.repository)[0]
 }
 
+resource "github_actions_repository_oidc_subject_claim_customization_template" "this" {
+  repository         = split("/", local.settings.github.repository)[1]
+  use_default        = false
+  include_claim_keys = ["repository_owner_id", "repository_id", "environment"]
+}
+
+resource "github_repository_ruleset" "main" {
+  repository  = split("/", local.settings.github.repository)[1]
+  name        = "main requires PR and CI"
+  target      = "branch"
+  enforcement = "active"
+
+  # No bypass actors, including repository administrators.
+  conditions {
+    ref_name {
+      include = ["refs/heads/${local.settings.github.branch}"]
+      exclude = []
+    }
+  }
+  rules {
+    deletion         = true
+    non_fast_forward = true
+    pull_request {
+      # A solo maintainer cannot approve their own PR.
+      required_approving_review_count = 0
+    }
+    required_status_checks {
+      strict_required_status_checks_policy = true
+      required_check {
+        context        = "validate"
+        integration_id = 15368 # GitHub Actions
+      }
+      required_check {
+        context        = "plan"
+        integration_id = 15368
+      }
+    }
+  }
+}
+
 resource "github_repository_environment" "oci" {
   repository  = split("/", local.settings.github.repository)[1]
   environment = local.settings.github.environment
@@ -44,9 +84,9 @@ locals {
 }
 
 resource "github_actions_environment_secret" "this" {
-  for_each        = nonsensitive(toset(keys(local.github_secrets)))
-  repository      = github_repository_environment.oci.repository
-  environment     = github_repository_environment.oci.environment
-  secret_name     = each.key
-  plaintext_value = local.github_secrets[each.key]
+  for_each    = nonsensitive(toset(keys(local.github_secrets)))
+  repository  = github_repository_environment.oci.repository
+  environment = github_repository_environment.oci.environment
+  secret_name = each.key
+  value       = local.github_secrets[each.key]
 }

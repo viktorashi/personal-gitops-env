@@ -29,7 +29,7 @@ locals {
 provider "oci" {
   region                              = local.settings.region
   auth                                = var.auth
-  config_file_profile                 = var.profile
+  config_file_profile                 = var.auth == "SecurityToken" ? var.profile : null
   token_exchange_requested_token_type = "urn:oci:token-type:oci-rpst"
   token_exchange_subject_token_type   = "jwt"
   token_exchange_resource_type        = "githubactions"
