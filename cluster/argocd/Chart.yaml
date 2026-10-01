@@ -1,0 +1,9 @@
+apiVersion: v2
+name: personal-argocd
+description: Self-managed Argo CD and applications
+type: application
+version: 0.1.0
+dependencies:
+  - name: argo-cd
+    version: 10.9.5
+    repository: oci://ghcr.io/argoproj/argo-helm

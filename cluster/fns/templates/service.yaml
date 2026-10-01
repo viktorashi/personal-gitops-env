@@ -8,15 +8,40 @@ metadata:
     service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
     service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode: None
     service.beta.kubernetes.io/oci-load-balancer-connection-idle-timeout: "3600"
+    {{- if .Values.publicTls.enabled }}
+    service.beta.kubernetes.io/oci-load-balancer-backend-protocol: TCP
+    {{- end }}
+    {{- if not .Values.publicTls.enabled }}
     service.beta.kubernetes.io/oci-load-balancer-ssl-ports: "443"
     service.beta.kubernetes.io/oci-load-balancer-tls-secret: fns-tls
     oci.oraclecloud.com/oci-load-balancer-listener-ssl-config: '{"CipherSuiteName":"oci-default-http2-tls-12-13-ssl-cipher-suite-v1","Protocols":["TLSv1.2","TLSv1.3"]}'
+    {{- end }}
 spec:
   type: LoadBalancer
+  selector:
+    {{- if .Values.publicTls.enabled }}
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: {{ .Release.Name }}-{{ .Release.Namespace }}
+    {{- else }}
+    app: fns
+    public-access: "true"
+    {{- end }}
+  ports:
+    - name: https
+      port: 443
+      targetPort: {{ ternary "websecure" "app" .Values.publicTls.enabled }}
+{{- if .Values.publicTls.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fns-backend
+spec:
   selector:
     app: fns
     public-access: "true"
   ports:
-    - name: https
-      port: 443
+    - name: app
+      port: 9000
       targetPort: app
+{{- end }}

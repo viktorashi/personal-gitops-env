@@ -59,11 +59,15 @@ mise run check
 description = "Lint and validate rendered Kubernetes manifests"
 shell = "bash -e -o pipefail -c"
 run = [
+  "helm dependency build cluster/fns",
   "helm lint cluster/fns",
+  "helm template fns cluster/fns --namespace fns --set publicTls.enabled=true | kubeconform -strict -summary",
   "helm template fns cluster/fns | kubeconform -strict -summary",
   "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com | kubeconform -strict -summary",
   "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com,publicAccess=true,registrationEnabled=false,adminUid=1 | kubeconform -strict -summary",
-  "kubectl kustomize cluster/argocd | kubeconform -strict -summary -ignore-missing-schemas",
+  "helm dependency build cluster/argocd",
+  "helm lint cluster/argocd",
+  "helm template argocd cluster/argocd --namespace argocd | kubeconform -strict -summary -ignore-missing-schemas",
 ]
 
 [tasks.install-hooks]

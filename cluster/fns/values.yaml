@@ -7,3 +7,65 @@ publicAccess: true
 registrationEnabled: false
 adminUid: 1
 image: docker.io/haierkeys/fast-note-sync-service:3.6.1@sha256:15833f15e83cee05794c3fe6028c7e41fd36c787f0d651415cad556579fc379f
+publicTls:
+  enabled: false
+traefik:
+  fullnameOverride: fns-tls-router
+  image:
+    registry: docker.io
+    repository: library/traefik
+    tag: v3.7.13
+    digest: sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
+  versionOverride: v3.7.13
+  service:
+    enabled: false
+  ingressClass:
+    enabled: false
+  providers:
+    kubernetesCRD:
+      enabled: false
+    kubernetesIngress:
+      enabled: false
+    file:
+      enabled: false
+  additionalArguments:
+    - --providers.file.directory=/etc/traefik/notes
+    - --providers.file.watch=true
+    - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+  volumes:
+    - name: fns-tls-routing
+      type: configMap
+      mountPath: /etc/traefik/notes
+  rbac:
+    enabled: false
+  api:
+    dashboard: false
+  global:
+    checkNewVersion: false
+  certificatesResolvers:
+    letsencrypt:
+      acme:
+        storage: /data/acme.json
+  persistence:
+    enabled: true
+    existingClaim: fns-data
+    subPath: tls-acme
+  deployment:
+    initContainers:
+      - name: acme-directory
+        image: docker.io/library/traefik:v3.7.13@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
+        command: [sh, -ec, 'mkdir -p /volume/tls-acme; chown 65532:65532 /volume/tls-acme; chmod 700 /volume/tls-acme']
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+        volumeMounts:
+          - name: data
+            mountPath: /volume
+  updateStrategy:
+    type: Recreate
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi

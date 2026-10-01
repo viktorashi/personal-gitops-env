@@ -2,6 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: bootstrap
+  namespace: {{ .Release.Namespace }}
 spec:
   sourceRepos:
     - https://github.com/viktorashi/personal-gitops-env.git
@@ -19,6 +20,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: fns
+  namespace: {{ .Release.Namespace }}
 spec:
   sourceRepos:
     - https://github.com/viktorashi/personal-gitops-env.git
@@ -28,6 +30,10 @@ spec:
   namespaceResourceWhitelist:
     - group: ''
       kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: ServiceAccount
     - group: apps
       kind: Deployment
 ---
@@ -35,12 +41,15 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   project: bootstrap
   source:
     repoURL: https://github.com/viktorashi/personal-gitops-env.git
     targetRevision: main
     path: cluster/argocd
+    helm:
+      releaseName: argocd
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
@@ -55,6 +64,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: fns
+  namespace: {{ .Release.Namespace }}
 spec:
   project: fns
   source:

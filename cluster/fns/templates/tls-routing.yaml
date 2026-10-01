@@ -1,0 +1,21 @@
+{{- if .Values.publicTls.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fns-tls-routing
+data:
+  routing.yaml: |
+    http:
+      routers:
+        notes:
+          rule: 'Host(`{{ required "hostname is required" .Values.hostname }}`)'
+          entryPoints: [websecure]
+          service: notes
+          tls:
+            certResolver: letsencrypt
+      services:
+        notes:
+          loadBalancer:
+            servers:
+              - url: http://fns-backend:9000
+{{- end }}

@@ -33,6 +33,7 @@ backend.hcl
 *.key
 
 # Build products and tool caches.
+cluster/*/charts/
 functions/backup/package/
 functions/backup/function.zip
 functions/backup/function.manifest.json
