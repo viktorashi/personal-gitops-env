@@ -21,6 +21,7 @@ kubectl = "1.37.1"
 experimental = true
 
 [env]
+_.source = { path = "scripts/oci-env.sh", tools = true }
 UV_LOCKED = "1"
 UV_PYTHON_DOWNLOADS = "never"
 UV_PYTHON_PREFERENCE = "only-system"
@@ -53,4 +54,4 @@ run = "uv run --locked --group build python functions/backup/package.py"
 
 [tasks.oci-login]
 description = "Only for admin user interactive session, not CI or nuthin"
-run = "oci session authenticate --region eu-frankfurt-1 --profile-name DEFAULT"
+run = 'oci session authenticate --region eu-frankfurt-1 --profile-name "${TF_VAR_profile:-DEFAULT}" --config-location "${OCI_CONFIG_FILE:-$HOME/.oci/config}"'

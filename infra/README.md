@@ -3,9 +3,6 @@
 With a valid OCI session, run from the repository root:
 
 ```sh
-TF_VAR_tenancy_ocid="$(mise exec -- oci iam availability-domain list \
-  --auth security_token --query 'data[0]."compartment-id"' --raw-output)"
-export TF_VAR_tenancy_ocid
 export GITHUB_TOKEN="$(gh auth token)"
 mise exec -- tofu -chdir=infra/foundation init -lockfile=readonly
 ```
@@ -20,9 +17,11 @@ mise exec -- tofu -chdir=infra/foundation plan -out=bootstrap.tfplan
 
 [Data sources](foundation/data.tf) resolve AD-1 and the `Default` domain during plan;
 [variables](foundation/variables.tf) expose selection and authentication options.
-The OCI provider requires a tenancy input; the CLI above gets it from your profile.
-Renew expired sessions with
-`mise exec -- oci session authenticate --profile-name DEFAULT`.
+[mise's local bridge](../scripts/oci-env.sh) reads the tenancy from your profile,
+so activated shells can use `tofu plan`; otherwise `mise exec -- tofu plan`.
+Select a profile with `TF_VAR_profile` (or `OCI_CLI_PROFILE`) before invoking mise;
+explicit `TF_VAR_tenancy_ocid` wins. CI never reads local profiles.
+Renew expired or missing sessions with `mise run oci-login`.
 
 Stop before apply: zero trial-credit usage is not yet verified. Keep state private.
 Settings: [settings.json](settings.json). Permissions: [pipeline.tf](foundation/pipeline.tf).

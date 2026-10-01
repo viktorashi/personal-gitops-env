@@ -11,7 +11,7 @@ variable "auth" {
 }
 
 variable "tenancy_ocid" {
-  description = "Target tenancy; supply via TF_VAR_tenancy_ocid from the authenticated OCI profile."
+  description = "Target tenancy. Locally: mise run oci-login, then mise exec -- tofu plan. Override with TF_VAR_tenancy_ocid."
   type        = string
   validation {
     condition     = can(regex("^ocid1\\.tenancy\\.[a-z0-9]+\\.\\.[a-z0-9]+$", var.tenancy_ocid))
