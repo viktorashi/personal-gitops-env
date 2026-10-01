@@ -53,3 +53,7 @@ depends = ["install-hooks"]
 [tasks.package-backup]
 description = "Build the Functions deployment archive"
 run = "uv run --locked --group build python functions/backup/package.py"
+
+[tasks.oci-login]
+description = "Only for admin user interactive session, not CI or nuthin"
+run = "oci session authenticate --region eu-frankfurt-1 --profile-name DEFAULT"
