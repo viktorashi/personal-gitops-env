@@ -111,7 +111,6 @@ resource "oci_core_security_list" "this" {
     for_each = each.value.public ? [
       { source = var.admin_cidr, port = 6443 },
       { source = "0.0.0.0/0", port = 80 },
-      { source = "0.0.0.0/0", port = 443 },
     ] : []
     content {
       protocol = "6"

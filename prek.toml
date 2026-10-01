@@ -36,9 +36,9 @@ always_run = true
 [[repos.hooks]]
 id = "cluster"
 name = "Render and validate GitOps manifests"
-entry = "mise exec -- bash scripts/check-cluster.sh"
+entry = "mise run check-cluster"
 language = "system"
-files = '^(cluster/|scripts/check-cluster\.sh$)'
+files = '^(cluster/|mise\.toml$)'
 pass_filenames = false
 
 [[repos.hooks]]

@@ -12,10 +12,8 @@ spec:
   type: LoadBalancer
   selector:
     app: fns
+    public-access: "true"
   ports:
     - name: http
       port: 80
-      targetPort: http
-    - name: https
-      port: 443
-      targetPort: https
+      targetPort: app

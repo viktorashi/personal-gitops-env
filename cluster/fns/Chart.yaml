@@ -1,6 +1,6 @@
 apiVersion: v2
 name: fns
-description: Fast Note Sync with SQLite and IP HTTPS
+description: Fast Note Sync with SQLite and a DNS hostname
 type: application
 version: 0.1.0
 appVersion: 3.6.1

@@ -1,33 +1,8 @@
 {{- if .Values.enabled }}
-{{- $ip := required "Set publicIp to the Service's IP" .Values.publicIp }}
+{{- $hostname := required "Set hostname to your DNS name" .Values.hostname }}
 {{- if and .Values.publicAccess (or .Values.registrationEnabled (not .Values.adminUid)) }}
 {{- fail "Disable registration and set adminUid before enabling publicAccess" }}
 {{- end }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fns-caddy
-data:
-  Caddyfile: |
-    {
-      email {{ required "Set acmeEmail" .Values.acmeEmail }}
-      auto_https disable_redirects
-    }
-    https://{{ $ip }} {
-      tls {
-        issuer acme {
-          dir https://acme-v02.api.letsencrypt.org/directory
-          profile shortlived
-          disable_tlsalpn_challenge
-        }
-      }
-      {{- if .Values.publicAccess }}
-      reverse_proxy 127.0.0.1:9000
-      {{- else }}
-      respond "Initial setup in progress" 503
-      {{- end }}
-    }
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -43,6 +18,7 @@ spec:
     metadata:
       labels:
         app: fns
+        public-access: {{ .Values.publicAccess | quote }}
       annotations:
         configuration: {{ .Values | toJson | sha256sum | quote }}
     spec:
@@ -57,7 +33,7 @@ spec:
           args:
             - |
               umask 077
-              mkdir -p /data/config /data/storage /data/caddy
+              mkdir -p /data/config /data/storage
               if [ ! -f /data/config/auth-key ]; then
                 head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/config/auth-key
               fi
@@ -67,7 +43,7 @@ spec:
               cat > /data/config/config.yaml.new <<EOF
               server:
                 http-port: ":9000"
-                ext-api-url: "https://{{ $ip }}"
+                ext-api-url: "http://{{ $hostname }}"
               security:
                 auth-token-key: "$(cat /data/config/auth-key)"
                 share-token-key: "$(cat /data/config/share-key)"
@@ -104,20 +80,7 @@ spec:
           volumeMounts:
             - {name: data, mountPath: /fast-note-sync/storage, subPath: storage}
             - {name: data, mountPath: /fast-note-sync/config, subPath: config}
-        - name: caddy
-          image: {{ .Values.caddyImage }}
-          ports:
-            - {name: http, containerPort: 80}
-            - {name: https, containerPort: 443}
-          resources:
-            requests: {cpu: 25m, memory: 64Mi}
-            limits: {memory: 256Mi}
-          volumeMounts:
-            - {name: caddy-config, mountPath: /etc/caddy, readOnly: true}
-            - {name: data, mountPath: /data, subPath: caddy}
       volumes:
         - name: data
           persistentVolumeClaim: {claimName: fns-data}
-        - name: caddy-config
-          configMap: {name: fns-caddy}
 {{- end }}

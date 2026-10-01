@@ -27,8 +27,6 @@ spec:
       server: https://kubernetes.default.svc
   namespaceResourceWhitelist:
     - group: ''
-      kind: ConfigMap
-    - group: ''
       kind: Service
     - group: apps
       kind: Deployment

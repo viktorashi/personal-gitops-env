@@ -43,6 +43,17 @@ run = "prek run --all-files"
 description = "Check backup rotation"
 run = "uv run --locked python -m unittest discover -s functions/backup"
 
+[tasks.check-cluster]
+description = "Lint and validate rendered Kubernetes manifests"
+shell = "bash -e -o pipefail -c"
+run = [
+  "helm lint cluster/fns",
+  "helm template fns cluster/fns | kubeconform -strict -summary",
+  "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com | kubeconform -strict -summary",
+  "helm template fns cluster/fns --set enabled=true,hostname=notes.example.com,publicAccess=true,registrationEnabled=false,adminUid=1 | kubeconform -strict -summary",
+  "kubectl kustomize cluster/argocd | kubeconform -strict -summary -ignore-missing-schemas",
+]
+
 [tasks.install-hooks]
 description = "Install local Git hooks"
 run = "prek install --prepare-hooks"

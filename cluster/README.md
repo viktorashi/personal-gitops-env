@@ -43,10 +43,11 @@ belong to [the human bootstrap stack](../infra/cluster/main.tf).
 Argo owns application resources.
 Keep that local state with your other encrypted bootstrap-state backups.
 
-## First user and HTTPS
+## DNS and first user
 
-Edit [values.yaml](fns/values.yaml): set the Service's IP, your ACME email and
-`enabled: true`. Keep `publicAccess: false`, merge, then run:
+Create a DNS A record pointing your hostname at the Service's public IP.
+Set `hostname` and `enabled: true` in [values.yaml](fns/values.yaml).
+Keep `publicAccess: false`, merge, then run:
 
 ```sh
 kubectl -n fns port-forward deployment/fns 9000:9000
@@ -54,17 +55,18 @@ kubectl -n fns port-forward deployment/fns 9000:9000
 
 Register at `http://localhost:9000`. Commit your numeric user ID as `adminUid`,
 with `registrationEnabled: false` and `publicAccess: true`.
-Caddy obtains/renews a short-lived Let's Encrypt IP certificate over port 80.
-Verify `https://<IP>` without TLS bypasses and copy the API config into Obsidian.
-Registration is never publicly opened.
+The load balancer forwards HTTP port 80 directly to FNS on port 9000.
+DNS supplies the name, not encryption: this configuration has no HTTPS.
+Use `http://<hostname>` for the API. While `publicAccess` is false, the public
+Service selects no pods; initial registration is accessible only by port-forward.
 
-Secrets are generated inside the pod and retained beside SQLite, attachments and
-Caddy state on the backed-up volume. Startup rewrites config.yaml from Git settings.
+Secrets, SQLite and attachments share the backed-up volume.
+Startup rewrites config.yaml from Git settings.
 Reverts restore manifests, **not data**. Test SQLite/attachment recovery before
 storing irreplaceable notes. Stop Argo reconciliation and FNS for volume recovery.
 
 ## Checks
 
-`mise exec -- bash scripts/check-cluster.sh` checks disabled/setup/public manifests.
+`mise run check-cluster` checks disabled/setup/public manifests.
 After deployment, change the Deployment's replica count and verify self-healing.
-Verify an Obsidian round-trip and certificate renewal. These live checks need OKE.
+Verify an Obsidian round-trip. These live checks need OKE.
