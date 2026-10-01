@@ -6,4 +6,4 @@ hostname: fns-141-147-0-172.sslip.io
 publicAccess: false
 registrationEnabled: true
 adminUid: 0
-image: haierkeys/fast-note-sync-service:3.6.1@sha256:15833f15e83cee05794c3fe6028c7e41fd36c787f0d651415cad556579fc379f
+image: docker.io/haierkeys/fast-note-sync-service:3.6.1@sha256:15833f15e83cee05794c3fe6028c7e41fd36c787f0d651415cad556579fc379f
