@@ -1,6 +1,6 @@
 data "oci_functions_functions_runtime_versions" "python" {
   functions_runtime_name       = "python312.ol9"
-  functions_runtime_version_id = var.runtime_version_id
+  functions_runtime_version_id = local.settings.backup_runtime_version_id
   state                        = "ACTIVE"
   lifecycle {
     postcondition {
@@ -17,7 +17,25 @@ resource "oci_functions_application" "this" {
   shape          = "GENERIC_X86"
 }
 
+resource "oci_objectstorage_object" "archive" {
+  namespace    = data.oci_objectstorage_namespace.this.namespace
+  bucket       = local.bucket
+  object       = "backup-function.zip"
+  source       = local.archive
+  content_type = "application/zip"
+}
+
+resource "oci_identity_policy" "archive" {
+  compartment_id = var.tenancy_ocid
+  name           = "gitops-backup-archive"
+  description    = "Only the recovery application can read its function archive"
+  statements = [
+    "Allow any-user to read objects in compartment id ${local.compartment_id} where all {request.principal.type = 'fnapp', request.principal.id = '${oci_functions_application.this.id}', target.bucket.name = '${local.bucket}', target.object.name = '${oci_objectstorage_object.archive.object}'}",
+  ]
+}
+
 resource "oci_functions_function" "this" {
+  depends_on         = [oci_identity_policy.archive]
   application_id     = oci_functions_application.this.id
   display_name       = "fns-backup"
   memory_in_mbs      = 256
@@ -43,8 +61,11 @@ resource "oci_functions_function" "this" {
     source_type = "ARCHIVE"
     handler     = "func.handler"
     archive_source_details {
-      archive_source_type = "DIRECT_ARCHIVE"
-      archive_file        = fileexists(local.archive) ? filebase64(local.archive) : null
+      archive_source_type = "OBJECT_STORAGE_ARCHIVE"
+      namespace           = oci_objectstorage_object.archive.namespace
+      bucket              = oci_objectstorage_object.archive.bucket
+      object              = oci_objectstorage_object.archive.object
+      object_version_id   = oci_objectstorage_object.archive.version_id
     }
     runtime_config {
       runtime_config_type          = "MANUAL"

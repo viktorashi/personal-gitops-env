@@ -14,12 +14,3 @@ variable "enabled" {
   type        = bool
   default     = false
 }
-
-variable "runtime_version_id" {
-  description = "Pinned OCI Python 3.12/OL9 runtime OCID; deliberately no latest fallback."
-  type        = string
-  validation {
-    condition     = startswith(var.runtime_version_id, "ocid1.")
-    error_message = "Select an explicit runtime version before planning recovery."
-  }
-}

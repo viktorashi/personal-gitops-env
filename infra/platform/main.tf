@@ -43,7 +43,7 @@ resource "oci_containerengine_node_pool" "this" {
     is_pv_encryption_in_transit_enabled = true
     placement_configs {
       availability_domain = module.foundation.volume.availability_domain
-      subnet_id           = module.foundation.subnet_ids.oke
+      subnet_id           = module.foundation.subnet_ids.workers
     }
   }
   lifecycle {
