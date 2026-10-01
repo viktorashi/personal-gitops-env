@@ -113,7 +113,7 @@ resource "oci_core_security_list" "this" {
   dynamic "ingress_security_rules" {
     for_each = each.key == "oke" ? [
       { source = var.admin_cidr, port = 6443 },
-      { source = "0.0.0.0/0", port = 80 },
+      { source = "0.0.0.0/0", port = 443 },
     ] : []
     content {
       protocol = "6"

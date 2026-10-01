@@ -45,10 +45,18 @@ Keep that local state with your other encrypted bootstrap-state backups.
 
 ## Public address and first user
 
-OCI assigns this load balancer a public IP, not a default application DNS name.
-Get it with `kubectl -n fns get svc fns -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`.
-Set `hostname` to that IPv4 address and `enabled: true` in [values.yaml](fns/values.yaml).
-Keep `publicAccess: false`, merge, then run:
+Endpoint: <https://fns-141-147-0-172.sslip.io>.
+[sslip.io](https://sslip.io/) resolves the embedded load-balancer IP for free;
+it is an external DNS dependency, not a domain we own.
+
+The OCI load balancer terminates TLS; no extra proxy is installed.
+Trust [notes-ca.crt](notes-ca.crt) on each personal device before logging in.
+This is a private CA, **not** a publicly trusted certificate. Never disable TLS
+verification or accept an unexplained certificate warning. Its private key stays
+in the protected human bootstrap state. Verify the public certificate fingerprint
+with `openssl x509 -in cluster/notes-ca.crt -noout -fingerprint -sha256`.
+
+For first-user bootstrap, keep `publicAccess: false`, merge, then run:
 
 ```sh
 kubectl -n fns port-forward deployment/fns 9000:9000
@@ -56,10 +64,14 @@ kubectl -n fns port-forward deployment/fns 9000:9000
 
 Register at `http://localhost:9000`. Commit your numeric user ID as `adminUid`,
 with `registrationEnabled: false` and `publicAccess: true`.
-The load balancer forwards HTTP port 80 directly to FNS on port 9000.
-Use `http://<public-IP>` for the API; this configuration has no HTTPS, so traffic
-and credentials are not encrypted in transit. While `publicAccess` is false,
-the public Service selects no pods; registration is accessible only by port-forward.
+The public listener is HTTPS-only; traffic inside the VCN goes to FNS over HTTP.
+While `publicAccess` is false, the Service selects no pods.
+
+The server certificate lasts one year.
+Reconcile [the TLS resources](../infra/cluster/tls.tf)
+in the last 30 days to renew it, then verify the load balancer presents the new
+certificate. This setup does not renew itself while OpenTofu is idle.
+An IP change requires a Git hostname update and a matching certificate.
 
 Secrets, SQLite and attachments share the backed-up volume.
 Startup rewrites config.yaml from Git settings.
