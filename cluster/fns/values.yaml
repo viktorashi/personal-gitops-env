@@ -3,7 +3,7 @@ enabled: true
 # The Service's public IPv4 address works here; no domain is required.
 hostname: fns-141-147-0-172.sslip.io
 # Keep false while registering your user through kubectl port-forward.
-publicAccess: false
-registrationEnabled: true
-adminUid: 0
+publicAccess: true
+registrationEnabled: false
+adminUid: 1
 image: docker.io/haierkeys/fast-note-sync-service:3.6.1@sha256:15833f15e83cee05794c3fe6028c7e41fd36c787f0d651415cad556579fc379f
