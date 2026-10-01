@@ -22,8 +22,11 @@ locals {
 }
 
 resource "oci_identity_domains_app" "preview" {
-  idcs_endpoint   = local.identity_domain.url
-  schemas         = ["urn:ietf:params:scim:schemas:oracle:idcs:App"]
+  idcs_endpoint = local.identity_domain.url
+  schemas = [
+    "urn:ietf:params:scim:schemas:oracle:idcs:App",
+    "urn:ietf:params:scim:schemas:oracle:idcs:extension:OCITags",
+  ]
   display_name    = "${local.settings.name}-github-preview"
   active          = true
   is_oauth_client = true
@@ -31,34 +34,6 @@ resource "oci_identity_domains_app" "preview" {
   allowed_grants  = ["client_credentials"]
   based_on_template {
     value = "CustomWebAppTemplateId"
-  }
-}
-
-resource "oci_identity_domains_identity_propagation_trust" "preview" {
-  idcs_endpoint          = local.identity_domain.url
-  schemas                = ["urn:ietf:params:scim:schemas:oracle:idcs:IdentityPropagationTrust"]
-  name                   = "${local.settings.name}-github-preview"
-  type                   = "JWT"
-  active                 = true
-  issuer                 = "https://token.actions.githubusercontent.com"
-  public_key_endpoint    = "https://token.actions.githubusercontent.com/.well-known/jwks"
-  subject_type           = "Resource"
-  subject_claim_name     = "sub"
-  allow_impersonation    = true
-  impersonating_resource = "githubactions"
-  oauth_clients          = [oci_identity_domains_app.preview.name]
-  dynamic "claim_validations" {
-    for_each = {
-      repository_id       = local.settings.github.repository_id
-      repository_owner_id = local.settings.github.owner_id
-      sub                 = local.preview_subject
-      event_name          = "pull_request"
-      aud                 = local.settings.github.audience
-    }
-    content {
-      name  = claim_validations.key
-      value = claim_validations.value
-    }
   }
 }
 

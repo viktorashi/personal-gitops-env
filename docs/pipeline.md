@@ -29,6 +29,12 @@ auth tokens and SMTP credentials are disabled. Cloud identities use GitHub OIDC
 and separate non-admin OAuth clients; these are not human OCI accounts.
 Foundation state contains their secrets and must remain private and backed up.
 
+OCI requires one trust per issuer: both OAuth clients use the GitHub trust,
+which validates repository/owner IDs and audience. Signed environment subjects
+select separate IAM grants; GitHub environment policies allow `main` for deployment
+and PR merge refs for preview. An OAuth client secret alone cannot assume
+either identity.
+
 PR previews use no state lock because their credentials cannot write. Deployment
 locks state and creates a fresh plan, rather than applying a stale PR preview.
 Fork PRs run credential-free checks but cannot pass the cloud-plan gate; review
