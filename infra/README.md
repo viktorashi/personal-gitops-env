@@ -36,11 +36,10 @@ No exported tfvars or backend configuration files are used.
 
 Python dependencies and build tools: [pyproject.toml](../pyproject.toml), [uv.lock](../uv.lock).
 Build with `mise run package-backup`; recovery rejects stale artifacts.
-The [recovery runtime](recovery/variables.tf) requires an explicit version OCID until
-an authenticated lookup can supply a reviewed pin. No `latest` fallback is used.
+The recovery runtime version is pinned in [settings.json](settings.json).
 
 After platform creation: [Argo/FNS bootstrap](../cluster/README.md).
-Networking uses one public OKE/LB subnet and one private Functions subnet.
+Networking uses separate public OKE/API-LB and worker subnets, plus private Functions.
 Their separate internet/service routes follow [Oracle's requirements](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengnetworkconfig.htm).
-This replaces the unapplied three-subnet design; regenerate old saved plans.
+OKE rejects node pools in the cluster's service load-balancer subnet.
 State, recovery and platform compartments retain their separate IAM boundaries.

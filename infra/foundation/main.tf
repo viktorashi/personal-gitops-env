@@ -1,5 +1,6 @@
 locals {
   subnets = {
+    workers  = { cidr = cidrsubnet(oci_core_vcn.this.cidr_blocks[0], 8, 2), public = true }
     oke      = { cidr = cidrsubnet("10.0.0.0/16", 8, 0), public = true }
     recovery = { cidr = cidrsubnet("10.0.0.0/16", 8, 1), public = false }
   }
@@ -108,7 +109,7 @@ resource "oci_core_security_list" "this" {
     destination = "0.0.0.0/0"
   }
   dynamic "ingress_security_rules" {
-    for_each = each.value.public ? [
+    for_each = each.key == "oke" ? [
       { source = var.admin_cidr, port = 6443 },
       { source = "0.0.0.0/0", port = 80 },
     ] : []
@@ -122,10 +123,10 @@ resource "oci_core_security_list" "this" {
     }
   }
   dynamic "ingress_security_rules" {
-    for_each = each.value.public ? [1] : []
+    for_each = each.value.public ? [local.subnets.oke.cidr, local.subnets.workers.cidr] : []
     content {
       protocol = "all"
-      source   = each.value.cidr
+      source   = ingress_security_rules.value
     }
   }
   ingress_security_rules {
