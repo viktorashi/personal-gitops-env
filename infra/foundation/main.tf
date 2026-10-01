@@ -31,6 +31,8 @@ resource "oci_limits_quota" "free" {
     "zero compute quotas in tenancy",
     "zero compute-core quotas in tenancy",
     "zero compute-memory quotas in tenancy",
+    "set compute-core quota standard-a1-core-regional-count to ${local.settings.node.ocpus} in tenancy where request.region = '${local.settings.region}'",
+    "set compute-memory quota standard-a1-memory-regional-count to ${local.settings.node.memory_gbs} in tenancy where request.region = '${local.settings.region}'",
     "set compute-core quota standard-a1-core-count to ${local.settings.node.ocpus} in tenancy where request.ad = '${local.availability_domain}'",
     "set compute-memory quota standard-a1-memory-count to ${local.settings.node.memory_gbs} in tenancy where request.ad = '${local.availability_domain}'",
     "zero block-storage quotas in tenancy",
