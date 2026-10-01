@@ -22,6 +22,7 @@ variable "tenancy_ocid" {
 variable "state_user_email" {
   description = "Reachable email or alias for gitops-state, unique among tenancy users. Required by Identity Domains."
   type        = string
+  default     = "ioanvictorstan@gmail.com"
   validation {
     condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.state_user_email))
     error_message = "Supply a valid, unique email address for the state-backend user."
