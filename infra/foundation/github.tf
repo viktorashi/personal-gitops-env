@@ -44,7 +44,7 @@ locals {
 }
 
 resource "github_actions_environment_secret" "this" {
-  for_each        = toset(["OCI_CLIENT_ID", "OCI_CLIENT_SECRET", "OCI_STATE_ACCESS_KEY", "OCI_STATE_SECRET_KEY"])
+  for_each        = nonsensitive(toset(keys(local.github_secrets)))
   repository      = github_repository_environment.oci.repository
   environment     = github_repository_environment.oci.environment
   secret_name     = each.key

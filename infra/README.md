@@ -12,6 +12,7 @@ mise exec -- tofu -chdir=infra/foundation init -lockfile=readonly
 
 Copy [example inputs](foundation/inputs.example.tfvars) to `inputs.auto.tfvars`
 in that directory. Set your allowed public IPv4 `/32` and confirm no paid upgrade.
+Existing files should contain only those inputs; old placeholders override `TF_VAR_*`.
 
 ```sh
 mise exec -- tofu -chdir=infra/foundation plan -out=bootstrap.tfplan

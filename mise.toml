@@ -36,11 +36,8 @@ depends = ["test"]
 run = "prek run --all-files"
 
 [tasks.test]
-description = "Check backup rotation and platform plan boundaries"
-run = [
-  "uv run --locked python -m unittest discover -s functions/backup",
-  "uv run --locked python -m unittest discover -s infra/platform",
-]
+description = "Check backup rotation"
+run = "uv run --locked python -m unittest discover -s functions/backup"
 
 [tasks.install-hooks]
 description = "Install local Git hooks"

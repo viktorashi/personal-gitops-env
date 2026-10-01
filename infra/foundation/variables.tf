@@ -14,8 +14,8 @@ variable "tenancy_ocid" {
   description = "Target tenancy; supply via TF_VAR_tenancy_ocid from the authenticated OCI profile."
   type        = string
   validation {
-    condition     = startswith(var.tenancy_ocid, "ocid1.tenancy.")
-    error_message = "Supply a tenancy OCID, not a child compartment."
+    condition     = can(regex("^ocid1\\.tenancy\\.[a-z0-9]+\\.\\.[a-z0-9]+$", var.tenancy_ocid))
+    error_message = "Supply a real tenancy OCID from your OCI profile; remove any placeholder from inputs.auto.tfvars."
   }
 }
 
