@@ -22,6 +22,7 @@ resource "oci_identity_user" "state" {
   compartment_id = var.tenancy_ocid
   name           = "gitops-state"
   description    = "S3-compatible state backend only"
+  email          = var.state_user_email
 }
 
 resource "oci_identity_group" "state" {
