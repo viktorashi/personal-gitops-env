@@ -1,5 +1,6 @@
 # Enable after binding the existing volume and obtaining the Service's public IP.
 enabled: false
+# The Service's public IPv4 address works here; no domain is required.
 hostname: ''
 # Keep false while registering your user through kubectl port-forward.
 publicAccess: false

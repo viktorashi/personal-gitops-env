@@ -43,10 +43,11 @@ belong to [the human bootstrap stack](../infra/cluster/main.tf).
 Argo owns application resources.
 Keep that local state with your other encrypted bootstrap-state backups.
 
-## DNS and first user
+## Public address and first user
 
-Create a DNS A record pointing your hostname at the Service's public IP.
-Set `hostname` and `enabled: true` in [values.yaml](fns/values.yaml).
+OCI assigns this load balancer a public IP, not a default application DNS name.
+Get it with `kubectl -n fns get svc fns -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`.
+Set `hostname` to that IPv4 address and `enabled: true` in [values.yaml](fns/values.yaml).
 Keep `publicAccess: false`, merge, then run:
 
 ```sh
@@ -56,9 +57,9 @@ kubectl -n fns port-forward deployment/fns 9000:9000
 Register at `http://localhost:9000`. Commit your numeric user ID as `adminUid`,
 with `registrationEnabled: false` and `publicAccess: true`.
 The load balancer forwards HTTP port 80 directly to FNS on port 9000.
-DNS supplies the name, not encryption: this configuration has no HTTPS.
-Use `http://<hostname>` for the API. While `publicAccess` is false, the public
-Service selects no pods; initial registration is accessible only by port-forward.
+Use `http://<public-IP>` for the API; this configuration has no HTTPS, so traffic
+and credentials are not encrypted in transit. While `publicAccess` is false,
+the public Service selects no pods; registration is accessible only by port-forward.
 
 Secrets, SQLite and attachments share the backed-up volume.
 Startup rewrites config.yaml from Git settings.

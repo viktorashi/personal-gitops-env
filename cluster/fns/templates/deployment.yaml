@@ -1,5 +1,5 @@
 {{- if .Values.enabled }}
-{{- $hostname := required "Set hostname to your DNS name" .Values.hostname }}
+{{- $hostname := required "Set hostname to the Service's public IPv4 address or your DNS name" .Values.hostname }}
 {{- if and .Values.publicAccess (or .Values.registrationEnabled (not .Values.adminUid)) }}
 {{- fail "Disable registration and set adminUid before enabling publicAccess" }}
 {{- end }}

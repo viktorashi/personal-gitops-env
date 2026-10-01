@@ -23,7 +23,8 @@ Select a profile with `TF_VAR_profile` (or `OCI_CLI_PROFILE`) before invoking mi
 explicit `TF_VAR_tenancy_ocid` wins. CI never reads local profiles.
 Renew expired or missing sessions with `mise run oci-login`.
 
-Stop before apply: zero trial-credit usage is not yet verified. Keep state private.
+Stop before apply: [Always Free audit](free-tier.md) has unresolved eligibility checks.
+Keep state private.
 Settings: [settings.json](settings.json). Permissions: [pipeline.tf](foundation/pipeline.tf).
 
 Foundation owns [GitHub settings and secrets](foundation/github.tf).
