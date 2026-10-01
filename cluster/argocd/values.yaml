@@ -1,0 +1,18 @@
+argo-cd:
+  fullnameOverride: argocd
+  global:
+    image:
+      tag: v3.5.3@sha256:dd3f47d5a5e4da563a7a398506e892481b358a7cec50abdf320c71aa55904bfa
+  dex:
+    enabled: false
+  notifications:
+    enabled: false
+  applicationSet:
+    replicas: 0
+  redis:
+    image:
+      repository: public.ecr.aws/docker/library/redis
+      tag: 8.2.3-alpine@sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba
+  server:
+    service:
+      type: ClusterIP

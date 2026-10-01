@@ -2,9 +2,9 @@
 
 This is the environment repo from the [book's quickstart](https://github.com/gitops-tech/book):
 Upstream builds FNS; Argo reconciles this repo's images/configuration inside OKE.
-[Argo CD Core](https://argo-cd.readthedocs.io/en/stable/operator-manual/core/) plus the
-upstream API/UI server are pinned together. SSO and notifications are omitted;
-the unused ApplicationSet controller is removed.
+[Argo CD's Helm chart](https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd)
+provides the controllers and API/UI server. SSO and notifications are disabled;
+ApplicationSet has zero replicas. Both Argo and FNS are rendered by Helm.
 CI only validates manifests.
 
 ## Bootstrap once
@@ -28,21 +28,48 @@ export KUBECONFIG=<private-path> OCI_CLI_AUTH=security_token
    ```
 
 3. Commit/push this configuration before bootstrap; Argo reads `main` on GitHub.
-4. `kubectl apply --server-side -k cluster/argocd/install`
-5. Wait for the application CRDs:
+4. `helm dependency build cluster/argocd`
+5. Render and bootstrap (on a fresh cluster, repeat after CRDs are established if
+   Kubernetes initially cannot discover Application/AppProject):
+
+   ```sh
+    helm template argocd cluster/argocd -n argocd | \
+      kubectl apply --server-side -f -
+   ```
+
+6. Wait for the application CRDs:
 
    ```sh
    kubectl wait --for=condition=Established --timeout=120s \
      crd/applications.argoproj.io crd/appprojects.argoproj.io
    ```
 
-6. `kubectl apply --server-side -k cluster/argocd`
-7. `kubectl -n argocd get applications` and `kubectl -n fns get svc fns`.
+7. Repeat the render/apply command, then `kubectl -n argocd get applications`.
 
 The public repo needs no Git credential. Namespaces and retained volume bindings
 belong to [the human bootstrap stack](../infra/cluster/main.tf).
 Argo owns application resources.
 Keep that local state with your other encrypted bootstrap-state backups.
+
+### Existing raw-manifest installation → Helm
+
+The upstream chart adds immutable selectors to the controller and repo server.
+Before merging this migration, pause the `argocd` Application's automated sync.
+With the reviewed chart checked out, delete only these stateless Argo workloads:
+
+```sh
+kubectl -n argocd patch application argocd --type merge \
+  -p '{"spec":{"syncPolicy":{"automated":null}}}'
+kubectl -n argocd delete statefulset argocd-application-controller
+kubectl -n argocd delete deployment argocd-repo-server
+```
+
+Then merge the checked PR, check out the merged `main`, and run the dependency
+build and render/apply commands above. Do not restart reconciliation against the
+old `main`: it still contains the raw manifests.
+Do not run this deletion on subsequent reconciliations. FNS keeps running.
+Verify both Applications are Synced/Healthy after the migration.
+Helm is the renderer; Argo owns reconciliation, not a separate Helm release.
 
 ## Argo CD web UI
 
