@@ -56,7 +56,14 @@ verification or accept an unexplained certificate warning. Its private key stays
 in the protected human bootstrap state. Verify the public certificate fingerprint
 with `openssl x509 -in cluster/notes-ca.crt -noout -fingerprint -sha256`.
 
-For first-user bootstrap, keep `publicAccess: false`, merge, then run:
+The initial account is `viktorashi`; its generated password is in the ignored,
+mode-0600 `.local/fns-login.json` on the bootstrap machine. Move it to your password
+manager and change it after first login. Registration is now disabled.
+In Obsidian, install Fast Note Sync, then paste the API configuration copied from
+the server's authenticated web UI. Test a disposable vault before real notes.
+Keep an independent encrypted copy of your vault; sync is not a backup.
+
+For a fresh first-user bootstrap, keep `publicAccess: false`, merge, then run:
 
 ```sh
 kubectl -n fns port-forward deployment/fns 9000:9000
