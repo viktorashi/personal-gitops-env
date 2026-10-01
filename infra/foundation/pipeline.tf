@@ -7,7 +7,7 @@ locals {
     aud                 = local.settings.github.audience
   }
   github_conditions = [
-    "request.principal.type = 'githubactions'",
+    "request.principal.type = 'identityfederateddomainapp'",
     "request.principal.domain.id = '${local.identity_domain.id}'",
     "request.principal.name = '${local.github_subject}'",
     "request.region = '${lower(local.settings.region_key)}'",

@@ -14,7 +14,7 @@ locals {
   preview_environment = "${local.settings.github.environment}-plan"
   preview_subject     = "repo:${local.settings.github.repository}:environment:${local.preview_environment}"
   preview_condition = "all {${join(", ", [
-    "request.principal.type = 'githubactions'",
+    "request.principal.type = 'identityfederateddomainapp'",
     "request.principal.domain.id = '${local.identity_domain.id}'",
     "request.principal.name = '${local.preview_subject}'",
     "request.region = '${lower(local.settings.region_key)}'",
