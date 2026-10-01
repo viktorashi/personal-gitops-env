@@ -1,6 +1,8 @@
 # Only the human foundation identity owns this trust and its grants.
 locals {
-  github_subject = "repo:${local.settings.github.repository}:environment:${local.settings.github.environment}"
+  # Explicit GitHub subject template avoids name-based versus immutable-default drift.
+  github_subject_prefix = "repository_owner_id:${local.settings.github.owner_id}:repository_id:${local.settings.github.repository_id}:environment"
+  github_subject        = "${local.github_subject_prefix}:${local.settings.github.environment}"
   github_claims = {
     repository_id       = local.settings.github.repository_id
     repository_owner_id = local.settings.github.owner_id

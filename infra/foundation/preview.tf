@@ -12,7 +12,7 @@ variable "state_plan_user_email" {
 
 locals {
   preview_environment = "${local.settings.github.environment}-plan"
-  preview_subject     = "repo:${local.settings.github.repository}:environment:${local.preview_environment}"
+  preview_subject     = "${local.github_subject_prefix}:${local.preview_environment}"
   preview_condition = "all {${join(", ", [
     "request.principal.type = 'identityfederateddomainapp'",
     "request.principal.domain.id = '${local.identity_domain.id}'",

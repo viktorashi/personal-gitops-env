@@ -2,6 +2,12 @@ provider "github" {
   owner = split("/", local.settings.github.repository)[0]
 }
 
+resource "github_actions_repository_oidc_subject_claim_customization_template" "this" {
+  repository         = split("/", local.settings.github.repository)[1]
+  use_default        = false
+  include_claim_keys = ["repository_owner_id", "repository_id", "environment"]
+}
+
 resource "github_repository_ruleset" "main" {
   repository  = split("/", local.settings.github.repository)[1]
   name        = "main requires PR and CI"
