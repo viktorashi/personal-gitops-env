@@ -43,7 +43,7 @@ spec:
               cat > /data/config/config.yaml.new <<EOF
               server:
                 http-port: ":9000"
-                ext-api-url: "http://{{ $hostname }}"
+                ext-api-url: "https://{{ $hostname }}"
               security:
                 auth-token-key: "$(cat /data/config/auth-key)"
                 share-token-key: "$(cat /data/config/share-key)"

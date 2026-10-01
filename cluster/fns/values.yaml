@@ -1,7 +1,7 @@
 # Enable after binding the existing volume and obtaining the Service's public IP.
-enabled: false
+enabled: true
 # The Service's public IPv4 address works here; no domain is required.
-hostname: ''
+hostname: fns-141-147-0-172.sslip.io
 # Keep false while registering your user through kubectl port-forward.
 publicAccess: false
 registrationEnabled: true

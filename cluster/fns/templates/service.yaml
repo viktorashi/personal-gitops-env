@@ -8,12 +8,15 @@ metadata:
     service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
     service.beta.kubernetes.io/oci-load-balancer-security-list-management-mode: None
     service.beta.kubernetes.io/oci-load-balancer-connection-idle-timeout: "3600"
+    service.beta.kubernetes.io/oci-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/oci-load-balancer-tls-secret: fns-tls
+    oci.oraclecloud.com/oci-load-balancer-listener-ssl-config: '{"CipherSuiteName":"oci-default-http2-tls-12-13-ssl-cipher-suite-v1","Protocols":["TLSv1.2","TLSv1.3"]}'
 spec:
   type: LoadBalancer
   selector:
     app: fns
     public-access: "true"
   ports:
-    - name: http
-      port: 80
+    - name: https
+      port: 443
       targetPort: app
